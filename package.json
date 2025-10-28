@@ -6,7 +6,15 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "dev": "npx expo start -c --dev-client",
+    "ios:dev:build": "eas build --platform ios --profile development",
+    "android:dev:build": "eas build --platform android --profile development",
+    "ios:preview:build": "eas build --platform ios --profile preview",
+    "ios:preview:update": "eas update --branch preview --platform ios",
+    "android:preview:build": "eas build --platform android --profile preview",
+    "android:preview:update": "eas update --branch preview --platform android",
+    "prebuild": "npm install"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -17,6 +25,7 @@
     "@supabase/supabase-js": "^2.76.1",
     "expo": "~54.0.18",
     "expo-av": "~16.0.7",
+    "expo-dev-client": "~6.0.16",
     "expo-image-picker": "^17.0.8",
     "expo-linear-gradient": "^15.0.7",
     "expo-location": "^19.0.7",

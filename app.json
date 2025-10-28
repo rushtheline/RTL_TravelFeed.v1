@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rushtheline.app"
+      "bundleIdentifier": "com.rushtheline.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -25,11 +28,12 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -48,6 +52,12 @@
           "locationAlwaysAndWhenInUsePermission": "Allow RushTheLine to use your location to show relevant airport content."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "b0c36dcd-fb2f-4065-ba0e-958a5b180e9c"
+      }
+    },
+    "owner": "rush-the-line"
   }
 }
