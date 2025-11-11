@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 import { PostCategory } from '../types/database.types';
 
@@ -47,18 +48,36 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
         return (
           <TouchableOpacity
             key={category.key}
-            style={[styles.chip, isSelected && styles.chipSelected]}
+            style={styles.chip}
             onPress={() => onSelectCategory(category.key as PostCategory | 'all')}
+            activeOpacity={0.9}
           >
-            {category.emoji && <Text style={styles.emoji}>{category.emoji}</Text>}
-            <Text style={[styles.label, isSelected && styles.labelSelected]}>
-              {category.label}
-            </Text>
-            {category.count !== undefined && (
-              <View style={styles.countBadge}>
-                <Text style={styles.countText}>{category.count}</Text>
-              </View>
-            )}
+            <LinearGradient
+              colors={
+                isSelected
+                  ? colors.gradient
+                  : ([colors.input, colors.input] as const)
+              }
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[
+                styles.chipContent,
+                !isSelected && styles.chipContentInactive,
+                isSelected && styles.chipContentActive,
+              ]}
+            >
+              {category.emoji && <Text style={styles.emoji}>{category.emoji}</Text>}
+              <Text style={[styles.label, isSelected && styles.labelSelected]}>
+                {category.label}
+              </Text>
+              {category.count !== undefined && (
+                <View style={[styles.countBadge, isSelected && styles.countBadgeActive]}>
+                  <Text style={[styles.countText, isSelected && styles.countTextActive]}>
+                    {category.count}
+                  </Text>
+                </View>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         );
       })}
@@ -68,27 +87,43 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: spacing.xs,
-    paddingVertical: spacing.md,
-    // marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
     gap: spacing.sm,
+    backgroundColor: colors.card,
+    borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderColor: colors.border,
+    width: '100%',
+    maxWidth: 576,
+    alignSelf: 'center',
   },
   chip: {
+    borderRadius: borderRadius.base,
+    overflow: 'hidden',
+    minHeight: 40,
+    minWidth: 96,
+    marginRight: spacing.sm,
+  },
+  chipContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
+    justifyContent: 'center',
+    backgroundColor: colors.input,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
     gap: spacing.xs,
+  },
+  chipContentInactive: {
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
   },
   chipSelected: {
     backgroundColor: colors.primary,
     borderColor: colors.primary,
+  },
+  chipContentActive: {
+    borderWidth: 0,
   },
   emoji: {
     fontSize: typography.sizes.md,
@@ -103,7 +138,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
   },
   countBadge: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.overlay,
     paddingHorizontal: spacing.xs,
     paddingVertical: 2,
     borderRadius: borderRadius.full,
@@ -113,6 +148,12 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.semibold,
+    color: colors.text.secondary,
+  },
+  countBadgeActive: {
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  countTextActive: {
     color: colors.text.primary,
   },
 });

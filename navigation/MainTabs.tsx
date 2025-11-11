@@ -37,12 +37,12 @@ export const MainTabs: React.FC = () => {
           backgroundColor: colors.card,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          paddingBottom: 18,
+          paddingBottom: 14,
           paddingTop: 8,
-          height: 90,
+          height: 72,
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.text.muted,
+        tabBarActiveTintColor: colors.text.primary,
+        tabBarInactiveTintColor: colors.text.tertiary,
         tabBarLabelStyle: {
           fontSize: typography.sizes.xs,
           fontWeight: typography.weights.semibold,
@@ -60,7 +60,7 @@ export const MainTabs: React.FC = () => {
             if (focused) {
               return (
                 <LinearGradient
-                  colors={[colors.primary, colors.secondary]}
+                  colors={colors.gradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[styles.tabButton, styles.tabButtonActive]}
@@ -84,7 +84,7 @@ export const MainTabs: React.FC = () => {
             if (focused) {
               return (
                 <LinearGradient
-                  colors={[colors.primary, colors.secondary]}
+                  colors={colors.gradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[styles.tabButton, styles.tabButtonActive]}
@@ -114,7 +114,7 @@ export const MainTabs: React.FC = () => {
             if (focused) {
               return (
                 <LinearGradient
-                  colors={[colors.primary, colors.secondary]}
+                  colors={colors.gradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={[styles.tabButton, styles.tabButtonActive]}
@@ -144,15 +144,19 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 24,
-    borderRadius: borderRadius.lg,
-    width: 75,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    borderRadius: borderRadius.base,
+    width: 96,
     gap: 4,
   },
   tabButtonActive: {
-    backgroundColor: colors.primary,
-    marginTop: 23,
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
   },
   tabLabelBase: {
     fontSize: typography.sizes.xs,
@@ -161,7 +165,7 @@ const styles = StyleSheet.create({
   inactiveLabel: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.semibold,
-    color: colors.text.muted,
+    color: colors.text.tertiary,
     marginTop: 2,
   },
 });

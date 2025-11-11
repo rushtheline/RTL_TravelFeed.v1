@@ -1,15 +1,21 @@
 export const colors = {
-  primary: "#a61470", // Pink/Magenta for buttons and accents
+  primary: "#A61470",
   secondary: "#C1433F",
-  background: "#272830", // Dark navy background
-  surface: "#252540", // Slightly lighter surface
+  gradient: ["#A61470", "#C1433F"] as const,
+  background: "#272830",
   card: "#1F2029",
+  surface: "#2A2B35",
+  input: "#1E1F29",
+  overlay: "#1E1F29",
   text: {
     primary: "#FFFFFF",
-    secondary: "#B0B0C8",
-    muted: "#7A7A95",
+    secondary: "#D1D5DB",
+    tertiary: "#9CA3AF",
+    muted: "#6B7280",
   },
-  border: "#3A3A55",
+  border: "#374151",
+  borderSecondary: "#4B5563",
+  focusRing: "#A61470",
   success: "#4CAF50",
   warning: "#FFC107",
   error: "#F44336",
@@ -32,29 +38,33 @@ export const colors = {
 };
 
 export const spacing = {
-  mdm: -16,
-  smm: -8,
-  xsm: -4,
+  mdm: -12,
+  smm: -6,
+  xsm: -3,
   xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
-  xxxl: 64,
-  xxxxl: 80,
-  xxxxxl: 96,
-};
-
-export const borderRadius = {
   sm: 8,
   md: 12,
   lg: 16,
   xl: 24,
+  xxl: 32,
+  xxxl: 40,
+  xxxxl: 48,
+  xxxxxl: 96,
+};
+
+export const borderRadius = {
+  xs: 6,
+  sm: 8,
+  base: 10,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
   full: 9999,
 };
 
 export const typography = {
+  fontFamily: "'Poppins', sans-serif",
   sizes: {
     xxs: 10,
     xs: 12,

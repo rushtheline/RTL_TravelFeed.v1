@@ -55,7 +55,12 @@ export const FlightInfoModal: React.FC<FlightInfoModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+        <LinearGradient
+          colors={['#1F2029', '#2A2B35']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.modalContainer}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconContainer}>
@@ -78,10 +83,17 @@ export const FlightInfoModal: React.FC<FlightInfoModalProps> = ({
               onPress={() => setActiveTab('flight')}
             >
               <LinearGradient
-                colors={activeTab === 'flight' ? [colors.primary, colors.secondary] : ['transparent', 'transparent']}
+                colors={
+                  activeTab === 'flight'
+                    ? colors.gradient
+                    : [colors.input, colors.input]
+                }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.tabGradient}
+                style={[
+                  styles.tabGradient,
+                  activeTab !== 'flight' && styles.tabGradientInactive,
+                ]}
               >
                 <Text style={[styles.tabText, activeTab === 'flight' && styles.tabTextActive]}>
                   Flight Number
@@ -94,10 +106,17 @@ export const FlightInfoModal: React.FC<FlightInfoModalProps> = ({
               onPress={() => setActiveTab('confirmation')}
             >
               <LinearGradient
-                colors={activeTab === 'confirmation' ? [colors.primary, colors.secondary] : ['transparent', 'transparent']}
+                colors={
+                  activeTab === 'confirmation'
+                    ? colors.gradient
+                    : [colors.input, colors.input]
+                }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
-                style={styles.tabGradient}
+                style={[
+                  styles.tabGradient,
+                  activeTab !== 'confirmation' && styles.tabGradientInactive,
+                ]}
               >
                 <Text style={[styles.tabText, activeTab === 'confirmation' && styles.tabTextActive]}>
                   Confirmation
@@ -145,9 +164,9 @@ export const FlightInfoModal: React.FC<FlightInfoModalProps> = ({
           )}
 
           {/* Continue Button */}
-          <TouchableOpacity onPress={handleContinue}>
+          <TouchableOpacity onPress={handleContinue} activeOpacity={0.9}>
             <LinearGradient
-              colors={[colors.primary, colors.secondary]}
+              colors={colors.gradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.continueButton}
@@ -168,7 +187,7 @@ export const FlightInfoModal: React.FC<FlightInfoModalProps> = ({
           <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
             <Text style={styles.skipButtonText}>Skip for now</Text>
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
       </View>
     </Modal>
   );
@@ -183,13 +202,17 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   modalContainer: {
-    backgroundColor: colors.card,
     borderRadius: borderRadius.xl,
-    padding: spacing.md,
+    padding: spacing.lg,
     width: '100%',
     maxWidth: 500,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.3,
+    shadowRadius: 32,
+    elevation: 14,
   },
   header: {
     flexDirection: 'row',
@@ -225,9 +248,10 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.xl,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
     borderRadius: borderRadius.lg,
     padding: spacing.xs,
+    backgroundColor: colors.input,
   },
   tab: {
     flex: 1,
@@ -244,10 +268,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     alignItems: 'center',
   },
+  tabGradientInactive: {
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+  },
   tabText: {
     fontSize: typography.sizes.xs,
     fontWeight: typography.weights.semibold,
-    color: colors.text.secondary,
+    color: colors.text.tertiary,
   },
   tabTextActive: {
     color: colors.text.primary,
@@ -262,14 +290,15 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   input: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.base,
     padding: spacing.md,
     fontSize: typography.sizes.lg,
     color: colors.text.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
     textAlign: 'center',
+    minHeight: 52,
   },
   hint: {
     fontSize: typography.sizes.sm,
@@ -278,8 +307,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   continueButton: {
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    borderRadius: borderRadius.base,
+    paddingVertical: spacing.md,
     alignItems: 'center',
     marginBottom: spacing.lg,
   },

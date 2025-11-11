@@ -166,12 +166,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selector: {
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
+    backgroundColor: colors.input,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.base,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
+    minHeight: 48,
   },
   selectorContent: {
     flexDirection: 'row',
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   },
   cityName: {
     fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
+    color: colors.text.tertiary,
     marginTop: 2,
   },
   modalOverlay: {
@@ -207,6 +208,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -214,7 +217,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSecondary,
   },
   modalTitle: {
     fontSize: typography.sizes.xl,
@@ -238,16 +241,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.input,
     padding: spacing.md,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.base,
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
   },
   airportItemSelected: {
     borderColor: colors.primary,
-    backgroundColor: `${colors.primary}15`,
+    backgroundColor: `${colors.primary}20`,
   },
   airportItemLeft: {
     flexDirection: 'row',
@@ -259,9 +262,11 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: colors.primary,
+    backgroundColor: `${colors.primary}30`,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   airportCode: {
     fontSize: typography.sizes.lg,

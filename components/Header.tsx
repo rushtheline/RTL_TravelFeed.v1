@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 import { Profile } from '../types/database.types';
 import { AirportSelector } from './AirportSelector';
@@ -68,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </View>
           <TouchableOpacity style={styles.flightButton} onPress={onFlightInfo}>
-            <TicketsPlane size={24} color={colors.text.secondary} />
+            <TicketsPlane size={22} color={colors.text.secondary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -86,8 +87,15 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
 
         <TouchableOpacity style={styles.aiButton} onPress={onAISummary}>
-          <Brain size={18} color={colors.text.primary} />
-          <Text style={styles.aiButtonText}>AI Summary</Text>
+          <LinearGradient
+            colors={colors.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.aiButtonGradient}
+          >
+            <Brain size={18} color={colors.text.primary} />
+            <Text style={styles.aiButtonText}>AI Summary</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -97,12 +105,15 @@ export const Header: React.FC<HeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.background,
-    paddingHorizontal: spacing.xs,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+    width: '100%',
+    maxWidth: 672,
+    alignSelf: 'center',
   },
   welcomeSection: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   welcomeRow: {
     flexDirection: 'row',
@@ -122,10 +133,13 @@ const styles = StyleSheet.create({
   flightButton: {
     padding: spacing.sm,
     marginLeft: spacing.sm,
-    borderRadius: borderRadius.md,
+    borderRadius: borderRadius.base,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: colors.borderSecondary,
+    backgroundColor: colors.input,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   badgeContainer: {
     flexDirection: 'row',
@@ -142,9 +156,9 @@ const styles = StyleSheet.create({
   },
   locationText: {
     fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-    marginTop: spacing.mdm,
-    marginBottom: spacing.md,
+    color: colors.text.tertiary,
+    marginTop: spacing.sm,
+    marginBottom: spacing.lg,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -156,16 +170,17 @@ const styles = StyleSheet.create({
   aiButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.xs,
+    borderRadius: borderRadius.base,
+    overflow: 'hidden',
+    minHeight: 44,
   },
-  aiButtonIcon: {
-    fontSize: typography.sizes.md,
+  aiButtonGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
   },
   aiButtonText: {
     fontSize: typography.sizes.md,

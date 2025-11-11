@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Modal, ScrollView, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ThumbsUp, MessageCircle, EllipsisVertical, Edit2, Trash2, X, MapPinned } from 'lucide-react-native';
 import { Video } from 'expo-av';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
@@ -97,10 +98,14 @@ export const PostCard: React.FC<PostCardProps> = ({
         </View>
 
         <View style={styles.headerRight}>
-          <TouchableOpacity style={[styles.categoryTag, { backgroundColor: categoryTag.color }]}>
+          <LinearGradient
+            colors={colors.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.categoryTag}
+          >
             <Text style={styles.categoryText}>{categoryTag.label}</Text>
-          </TouchableOpacity>
-          
+          </LinearGradient>
         </View>
           {isOwner && (onEdit || onDelete) && (
             <TouchableOpacity 
@@ -125,8 +130,8 @@ export const PostCard: React.FC<PostCardProps> = ({
           <Video
             source={{ uri: post.media_url }}
             style={styles.media}
-            useNativeControls
-            resizeMode={'contain' as any}
+            useNativeControls={false}
+            resizeMode={'cover' as any}
             isLooping
             shouldPlay={false}
           />
@@ -262,12 +267,19 @@ export const PostCard: React.FC<PostCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.card,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    marginTop: spacing.md,
-    // marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginTop: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 10,
+    width: '100%',
+    maxWidth: 576,
+    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',
@@ -316,7 +328,7 @@ const styles = StyleSheet.create({
   },
   userRole: {
     fontSize: typography.sizes.xs,
-    color: colors.text.secondary,
+    color: colors.text.tertiary,
   },
   timestamp: {
     fontSize: typography.sizes.xs,
@@ -328,16 +340,18 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   categoryTag: {
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
-    borderRadius: borderRadius.sm,
-    height: 24,
+    borderRadius: borderRadius.base,
+    minHeight: 24,
     justifyContent: 'center',
   },
   categoryText: {
-    fontSize: typography.sizes.xs,
+    fontSize: typography.sizes.xxs,
     fontWeight: typography.weights.semibold,
     color: colors.text.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   ownerActions: {
     flexDirection: 'row',
@@ -360,13 +374,14 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     lineHeight: 22,
     color: colors.text.primary,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
   },
   media: {
     width: '100%',
-    height: 200,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.md,
+    aspectRatio: 1,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.lg,
+    overflow: 'hidden',
   },
   footer: {
     flexDirection: 'row',
@@ -388,12 +403,13 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
+    minHeight: 44,
   },
   actionIcon: {
     fontSize: typography.sizes.md,
@@ -430,13 +446,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuModal: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
     padding: spacing.lg,
     width: '80%',
     maxWidth: 400,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
   },
   menuHeader: {
     flexDirection: 'row',
@@ -458,8 +474,8 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.input,
     marginBottom: spacing.sm,
   },
   menuItemText: {

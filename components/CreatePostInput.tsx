@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Camera, MapPin, EyeOff, Plane } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 
@@ -24,9 +25,16 @@ export const CreatePostInput: React.FC<CreatePostInputProps> = ({ onPress }) => 
         <TouchableOpacity style={styles.actionButton} onPress={onPress}>
           <EyeOff size={20} color={colors.text.primary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.shareButton} onPress={onPress}>
-          <Plane size={20} color={colors.text.primary} />
-          <Text style={styles.shareText}>Share</Text>
+        <TouchableOpacity style={styles.shareButton} onPress={onPress} activeOpacity={0.85}>
+          <LinearGradient
+            colors={colors.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.shareButtonGradient}
+          >
+            <Plane size={20} color={colors.text.primary} />
+            <Text style={styles.shareText}>Share</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -35,24 +43,29 @@ export const CreatePostInput: React.FC<CreatePostInputProps> = ({ onPress }) => 
 
 const styles = StyleSheet.create({
   container: {
-    // backgroundColor: colors.card,
-    // borderRadius: borderRadius.md,
-    // padding: spacing.xs,
-    marginBottom: spacing.md,
-    // borderWidth: 1,
-    // borderColor: colors.border,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    width: '100%',
+    maxWidth: 576,
+    alignSelf: 'center',
   },
   inputContainer: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.lg,
     padding: spacing.md,
-    marginBottom: spacing.sm,
-    minHeight: 60,
+    marginBottom: spacing.md,
+    minHeight: 64,
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
   },
   placeholder: {
     fontSize: typography.sizes.md,
-    color: colors.text.muted,
+    color: colors.text.tertiary,
   },
   actions: {
     flexDirection: 'row',
@@ -60,25 +73,31 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   actionButton: {
-    width: 40,
-    height: 40,
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    width: 44,
+    height: 44,
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.base,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
   },
   actionIcon: {
     fontSize: typography.sizes.lg,
   },
   shareButton: {
     flex: 1,
+    borderRadius: borderRadius.base,
+    overflow: 'hidden',
+  },
+  shareButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
     gap: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    minHeight: 44,
   },
   shareIcon: {
     fontSize: typography.sizes.md,

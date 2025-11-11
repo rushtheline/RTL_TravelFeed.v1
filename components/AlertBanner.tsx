@@ -169,7 +169,10 @@ export const AlertBanner: React.FC<AlertBannerProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: spacing.xs,
-    marginVertical: spacing.md,
+    marginVertical: spacing.lg,
+    width: '100%',
+    maxWidth: 576,
+    alignSelf: 'center',
   },
   banner: {
     flexDirection: 'row',

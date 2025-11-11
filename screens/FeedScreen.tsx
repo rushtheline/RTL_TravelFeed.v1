@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors, spacing } from "../constants/theme";
+import { colors, spacing, borderRadius } from "../constants/theme";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import {
@@ -741,7 +741,7 @@ export const FeedScreen: React.FC = () => {
                 )}
 
                 <View style={styles.feedNotice}>
-                  <MapPinned size={16} color={colors.text.secondary} />
+                  <MapPinned size={16} color={colors.text.tertiary} />
                   <Text style={styles.feedNoticeText}>
                     Your feed is currently showing posts from Terminal B.
                   </Text>
@@ -768,15 +768,17 @@ export const FeedScreen: React.FC = () => {
 
           const postItem = item as { type: "post"; data: PostWithDetails };
           return (
-            <PostCard
-              post={postItem.data}
-              onLike={() => handleLike(postItem.data.id)}
-              onComment={() => handleComment(postItem.data.id)}
-              onEdit={() => handleEdit(postItem.data.id)}
-              onDelete={() => handleDelete(postItem.data.id)}
-              isLiked={likedPosts.has(postItem.data.id)}
-              isOwner={postItem.data.user_id === profile?.id}
-            />
+            <View style={styles.feedItem}>
+              <PostCard
+                post={postItem.data}
+                onLike={() => handleLike(postItem.data.id)}
+                onComment={() => handleComment(postItem.data.id)}
+                onEdit={() => handleEdit(postItem.data.id)}
+                onDelete={() => handleDelete(postItem.data.id)}
+                isLiked={likedPosts.has(postItem.data.id)}
+                isOwner={postItem.data.user_id === profile?.id}
+              />
+            </View>
           );
         }}
         stickyHeaderIndices={[1]}
@@ -826,10 +828,16 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: spacing.xxxxxl,
-    paddingHorizontal: spacing.sm,
+    paddingHorizontal: spacing.md,
+    alignItems: 'center',
   },
   missionContainer: {
     paddingHorizontal: spacing.md,
+  },
+  feedItem: {
+    width: '100%',
+    maxWidth: 576,
+    alignSelf: 'center',
   },
   terminalInfo: {
     flexDirection: "row",
@@ -852,10 +860,17 @@ const styles = StyleSheet.create({
   feedNotice: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    marginBottom: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.lg,
     gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    width: '100%',
+    maxWidth: 576,
+    alignSelf: 'center',
   },
   feedNoticeIcon: {
     fontSize: 12,
@@ -870,24 +885,24 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: "absolute",
-    bottom: 20,
-    right: 10,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    bottom: 80,
+    right: spacing.md,
+    width: 54,
+    height: 54,
+    borderRadius: borderRadius.full,
     backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
     elevation: 8,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 18,
   },
   fabInner: {
     width: "100%",
     height: "100%",
-    borderRadius: 30,
+    borderRadius: borderRadius.full,
     alignItems: "center",
     justifyContent: "center",
   },

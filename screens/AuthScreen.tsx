@@ -9,8 +9,10 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -50,94 +52,119 @@ export const AuthScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
+      <LinearGradient
+        colors={['#272830', '#1F2029']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.backgroundGradient}
       >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.logo}>✈️</Text>
-            <Text style={styles.title}>RushTheLine</Text>
-            <Text style={styles.subtitle}>Live airport feed</Text>
-          </View>
-
-          <View style={styles.form}>
-            {isSignUp && (
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Username</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your username"
-                  placeholderTextColor={colors.text.muted}
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardView}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContent} bounces={false}>
+            <View style={styles.header}>
+              <View style={styles.logoContainer}>
+                <Text style={styles.logo}>✈️</Text>
               </View>
-            )}
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor={colors.text.muted}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoCorrect={false}
-              />
+              <Text style={styles.title}>RushTheLine</Text>
+              <Text style={styles.subtitle}>Airline meets social intelligence</Text>
             </View>
 
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                placeholderTextColor={colors.text.muted}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleAuth}
-              disabled={loading}
+            <LinearGradient
+              colors={['#2A2B35', '#1F2029']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
+              style={styles.formCard}
             >
-              {loading ? (
-                <ActivityIndicator color={colors.text.primary} />
-              ) : (
-                <Text style={styles.buttonText}>
-                  {isSignUp ? 'Sign Up' : 'Sign In'}
-                </Text>
-              )}
-            </TouchableOpacity>
+              <View style={styles.form}>
+                {isSignUp && (
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Username</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your username"
+                      placeholderTextColor={colors.text.muted}
+                      value={username}
+                      onChangeText={setUsername}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                    />
+                  </View>
+                )}
 
-            <TouchableOpacity
-              style={styles.switchButton}
-              onPress={() => setIsSignUp(!isSignUp)}
-            >
-              <Text style={styles.switchText}>
-                {isSignUp
-                  ? 'Already have an account? Sign In'
-                  : "Don't have an account? Sign Up"}
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your email"
+                    placeholderTextColor={colors.text.muted}
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    autoCorrect={false}
+                  />
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.label}>Password</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter your password"
+                    placeholderTextColor={colors.text.muted}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                  />
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.button, loading && styles.buttonDisabled]}
+                  onPress={handleAuth}
+                  disabled={loading}
+                  activeOpacity={0.9}
+                >
+                  <LinearGradient
+                    colors={colors.gradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.buttonGradient}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color={colors.text.primary} />
+                    ) : (
+                      <Text style={styles.buttonText}>
+                        {isSignUp ? 'Create account' : 'Sign In'}
+                      </Text>
+                    )}
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.switchButton}
+                  onPress={() => setIsSignUp(!isSignUp)}
+                  activeOpacity={0.85}
+                >
+                  <Text style={styles.switchText}>
+                    {isSignUp
+                      ? 'Already have an account? Sign In'
+                      : "New here? Create an account"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+
+            <View style={styles.footer}>
+              <Text style={styles.footerText}>
+                Real-time intel, powered by travelers like you.
               </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Join the community and share real-time airport updates
-            </Text>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
     </SafeAreaView>
   );
 };
@@ -147,21 +174,35 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  backgroundGradient: {
+    flex: 1,
+  },
   keyboardView: {
     flex: 1,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.xl,
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxxxl,
+    alignItems: 'center',
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
     marginBottom: spacing.xxl,
+    width: '100%',
+  },
+  logoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: borderRadius.xl,
+    backgroundColor: colors.input,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.md,
   },
   logo: {
     fontSize: 64,
-    marginBottom: spacing.md,
   },
   title: {
     fontSize: typography.sizes.xxxl,
@@ -172,37 +213,53 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: typography.sizes.lg,
     color: colors.text.secondary,
+    textAlign: 'center',
+  },
+  formCard: {
+    width: '100%',
+    maxWidth: 448,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.25,
+    shadowRadius: 30,
+    elevation: 10,
   },
   form: {
-    marginBottom: spacing.xl,
+    gap: spacing.md,
   },
   inputContainer: {
-    marginBottom: spacing.md,
+    gap: spacing.xs,
   },
   label: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
     color: colors.text.secondary,
-    marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.base,
     padding: spacing.md,
     fontSize: typography.sizes.md,
     color: colors.text.primary,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
+    height: 48,
   },
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    alignItems: 'center',
-    marginTop: spacing.md,
+    borderRadius: borderRadius.base,
+    overflow: 'hidden',
+    marginTop: spacing.lg,
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  buttonGradient: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
   },
   buttonText: {
     fontSize: typography.sizes.lg,
@@ -212,13 +269,15 @@ const styles = StyleSheet.create({
   switchButton: {
     marginTop: spacing.md,
     alignItems: 'center',
+    paddingVertical: spacing.sm,
   },
   switchText: {
     fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
+    color: colors.text.tertiary,
   },
   footer: {
     alignItems: 'center',
+    marginTop: spacing.lg,
   },
   footerText: {
     fontSize: typography.sizes.sm,

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { LogOut } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 
@@ -24,7 +25,12 @@ export const SignOutModal: React.FC<SignOutModalProps> = ({
       onRequestClose={onClose}
     >
       <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
+        <LinearGradient
+          colors={['#1F2029', '#2A2B35']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.modalContainer}
+        >
           <View style={styles.modalIconContainer}>
             <LogOut size={32} color={colors.error} />
           </View>
@@ -46,14 +52,22 @@ export const SignOutModal: React.FC<SignOutModalProps> = ({
             style={styles.signOutConfirmButton}
             onPress={onConfirm}
             disabled={loading}
+            activeOpacity={0.9}
           >
-            {loading ? (
-              <ActivityIndicator size="small" color={colors.text.primary} />
-            ) : (
-              <Text style={styles.signOutConfirmButtonText}>Sign Out</Text>
-            )}
+            <LinearGradient
+              colors={colors.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.signOutConfirmGradient}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color={colors.text.primary} />
+              ) : (
+                <Text style={styles.signOutConfirmButtonText}>Sign Out</Text>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
       </View>
     </Modal>
   );
@@ -68,13 +82,17 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
   },
   modalContainer: {
-    backgroundColor: colors.card,
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
     width: '100%',
     maxWidth: 400,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.3,
+    shadowRadius: 28,
+    elevation: 12,
   },
   modalIconContainer: {
     width: 64,
@@ -98,13 +116,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
   },
   cancelButton: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.base,
+    paddingVertical: spacing.md,
     alignItems: 'center',
     marginBottom: spacing.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
   },
   cancelButtonText: {
     fontSize: typography.sizes.lg,
@@ -112,9 +130,11 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   signOutConfirmButton: {
-    backgroundColor: colors.error,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
+    borderRadius: borderRadius.base,
+    overflow: 'hidden',
+  },
+  signOutConfirmGradient: {
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   signOutConfirmButtonText: {
