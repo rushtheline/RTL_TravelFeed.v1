@@ -279,7 +279,6 @@ const styles = StyleSheet.create({
     elevation: 10,
     width: '100%',
     maxWidth: 576,
-    alignSelf: 'center',
   },
   header: {
     flexDirection: 'row',

@@ -829,7 +829,6 @@ const styles = StyleSheet.create({
   listContent: {
     paddingBottom: spacing.xxxxxl,
     paddingHorizontal: spacing.md,
-    alignItems: 'center',
   },
   missionContainer: {
     paddingHorizontal: spacing.md,
