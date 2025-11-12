@@ -171,7 +171,9 @@ export const FlightInfoModal: React.FC<FlightInfoModalProps> = ({
               end={{ x: 1, y: 0 }}
               style={styles.continueButton}
             >
-              <Text style={styles.continueButtonText}>Continue</Text>
+              <View style={styles.continueButtonInner}>
+                <Text style={styles.continueButtonText}>Continue</Text>
+              </View>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -308,9 +310,13 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     borderRadius: borderRadius.base,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  continueButtonInner: {
     paddingVertical: spacing.md,
     alignItems: 'center',
-    marginBottom: spacing.lg,
   },
   continueButtonText: {
     fontSize: typography.sizes.md,

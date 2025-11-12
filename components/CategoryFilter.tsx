@@ -38,122 +38,163 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   const categories = getCategoryConfig(categoryCounts);
   
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.container}
-    >
-      {categories.map((category) => {
-        const isSelected = selectedCategory === category.key;
-        return (
-          <TouchableOpacity
-            key={category.key}
-            style={styles.chip}
-            onPress={() => onSelectCategory(category.key as PostCategory | 'all')}
-            activeOpacity={0.9}
-          >
-            <LinearGradient
-              colors={
-                isSelected
-                  ? colors.gradient
-                  : ([colors.input, colors.input] as const)
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+    <View style={styles.wrapper}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        style={styles.scrollView}
+      >
+        {categories.map((category) => {
+          const isSelected = selectedCategory === category.key;
+          const isAll = category.key === 'all';
+          const showCount = !isAll && category.count !== undefined;
+
+          const ChipWrapper: React.ComponentType<any> | null =
+            isSelected && isAll ? LinearGradient : View;
+
+          const wrapperProps =
+            isSelected && isAll
+              ? {
+                  colors: colors.gradient,
+                  start: { x: 0, y: 0 },
+                  end: { x: 1, y: 1 },
+                }
+              : {};
+
+          return (
+            <TouchableOpacity
+              key={category.key}
               style={[
-                styles.chipContent,
-                !isSelected && styles.chipContentInactive,
-                isSelected && styles.chipContentActive,
+                styles.chipBase,
+                isAll ? styles.chipAllBase : styles.chipDefaultBase,
+                isSelected
+                  ? isAll
+                    ? styles.chipAllActive
+                    : styles.chipDefaultActive
+                  : styles.chipDefaultInactive,
               ]}
+              activeOpacity={0.85}
+              onPress={() => onSelectCategory(category.key as PostCategory | 'all')}
             >
-              {category.emoji && <Text style={styles.emoji}>{category.emoji}</Text>}
-              <Text style={[styles.label, isSelected && styles.labelSelected]}>
-                {category.label}
-              </Text>
-              {category.count !== undefined && (
-                <View style={[styles.countBadge, isSelected && styles.countBadgeActive]}>
-                  <Text style={[styles.countText, isSelected && styles.countTextActive]}>
-                    {category.count}
+              <ChipWrapper
+                style={[
+                  styles.chipContentWrapper,
+                  isAll ? styles.chipContentAll : styles.chipContentDefault,
+                  isSelected && isAll && styles.chipContentAllActive,
+                ]}
+                {...wrapperProps}
+              >
+                <View style={styles.chipContent}>
+                  {category.emoji && (
+                    <Text style={[styles.label, styles.emoji]}>{category.emoji}</Text>
+                  )}
+                  <Text
+                    style={[
+                      styles.label,
+                      isSelected ? styles.labelSelected : styles.labelUnselected,
+                    ]}
+                  >
+                    {category.label}
+                    {showCount && (
+                      <Text style={styles.countText}> ({category.count})</Text>
+                    )}
                   </Text>
                 </View>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+              </ChipWrapper>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    gap: spacing.sm,
-    backgroundColor: colors.card,
+  wrapper: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: colors.background,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.15)',
     width: '100%',
     maxWidth: 576,
     alignSelf: 'center',
   },
-  chip: {
-    borderRadius: borderRadius.base,
+  scrollView: {
+    flexGrow: 0,
+  },
+  scrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  chipBase: {
+    borderRadius: 20,
     overflow: 'hidden',
-    minHeight: 40,
-    minWidth: 96,
-    marginRight: spacing.sm,
+    marginRight: spacing.md,
+    borderWidth: 1,
+  },
+  chipAllBase: {
+    borderRadius: 12,
+    borderWidth: 0,
+  },
+  chipDefaultBase: {
+    borderRadius: 20,
+  },
+  chipContentWrapper: {
+    borderRadius: 20,
+  },
+  chipContentAll: {
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(38,39,46,0.9)',
+  },
+  chipContentAllActive: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  chipContentDefault: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  chipDefaultInactive: {
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  chipDefaultActive: {
+    borderColor: colors.focusRing,
+    backgroundColor: 'rgba(166,20,112,0.2)',
+  },
+  chipAllActive: {
+    borderWidth: 0,
   },
   chipContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.input,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    gap: spacing.xs,
-  },
-  chipContentInactive: {
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-  },
-  chipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  chipContentActive: {
-    borderWidth: 0,
+    gap: spacing.sm,
   },
   emoji: {
-    fontSize: typography.sizes.md,
+    marginRight: spacing.xs,
   },
   label: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
-    color: colors.text.secondary,
+    letterSpacing: 0.2,
   },
   labelSelected: {
     color: colors.text.primary,
-    fontWeight: typography.weights.semibold,
   },
-  countBadge: {
-    backgroundColor: colors.overlay,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    borderRadius: borderRadius.full,
-    minWidth: 20,
-    alignItems: 'center',
+  labelUnselected: {
+    color: 'rgba(255,255,255,0.9)',
   },
   countText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.secondary,
-  },
-  countBadgeActive: {
-    backgroundColor: 'rgba(0,0,0,0.15)',
-  },
-  countTextActive: {
-    color: colors.text.primary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: 'rgba(255,255,255,0.75)',
   },
 });

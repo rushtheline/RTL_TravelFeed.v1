@@ -2,7 +2,7 @@ export const colors = {
   primary: "#A61470",
   secondary: "#C1433F",
   gradient: ["#A61470", "#C1433F"] as const,
-  background: "#272830",
+  background: "#1e1f24",
   card: "#1F2029",
   surface: "#2A2B35",
   input: "#1E1F29",
