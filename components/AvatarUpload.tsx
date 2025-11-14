@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
@@ -121,26 +122,41 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.avatarContainer}>
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <Text style={styles.avatarText}>
-              {username?.charAt(0).toUpperCase() || 'U'}
-            </Text>
-          </View>
-        )}
-        
+        <View style={styles.avatarRing}>
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+          ) : (
+            <LinearGradient
+              colors={colors.gradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.avatar, styles.avatarPlaceholder]}
+            >
+              <Text style={styles.avatarText}>
+                {username?.charAt(0).toUpperCase() || 'U'}
+              </Text>
+            </LinearGradient>
+          )}
+        </View>
+
         <TouchableOpacity
           style={styles.cameraButton}
           onPress={pickImage}
           disabled={uploading}
+          activeOpacity={0.9}
         >
-          {uploading ? (
-            <ActivityIndicator size="small" color={colors.text.primary} />
-          ) : (
-            <Camera size={20} color={colors.text.primary} />
-          )}
+          <LinearGradient
+            colors={colors.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.cameraButtonGradient}
+          >
+            {uploading ? (
+              <ActivityIndicator size="small" color={colors.text.primary} />
+            ) : (
+              <Camera size={16} color={colors.text.primary} />
+            )}
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -153,35 +169,50 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  avatarRing: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 4,
+    borderColor: colors.primary,
+    backgroundColor: colors.input,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 5,
-    borderColor: colors.primary,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
   },
   avatarPlaceholder: {
-    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 48,
+    fontSize: typography.sizes.xxxl,
     fontWeight: typography.weights.bold,
     color: colors.text.primary,
   },
   cameraButton: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: colors.primary,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    bottom: -2,
+    right: -2,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: colors.background,
+  },
+  cameraButtonGradient: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: colors.background,
   },
 });

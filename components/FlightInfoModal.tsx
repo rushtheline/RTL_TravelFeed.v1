@@ -79,49 +79,39 @@ export const FlightInfoModal: React.FC<FlightInfoModalProps> = ({
           {/* Tabs */}
           <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[styles.tab, activeTab === 'flight' && styles.tabActive]}
+              style={[
+                styles.tab,
+                activeTab === 'flight' ? styles.tabActive : styles.tabInactive,
+              ]}
               onPress={() => setActiveTab('flight')}
             >
-              <LinearGradient
-                colors={
-                  activeTab === 'flight'
-                    ? colors.gradient
-                    : [colors.input, colors.input]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+              <Text
                 style={[
-                  styles.tabGradient,
-                  activeTab !== 'flight' && styles.tabGradientInactive,
+                  styles.tabText,
+                  activeTab === 'flight' && styles.tabTextActive,
                 ]}
               >
-                <Text style={[styles.tabText, activeTab === 'flight' && styles.tabTextActive]}>
-                  Flight Number
-                </Text>
-              </LinearGradient>
+                Flight Number
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.tab, activeTab === 'confirmation' && styles.tabActive]}
+              style={[
+                styles.tab,
+                activeTab === 'confirmation'
+                  ? styles.tabActive
+                  : styles.tabInactive,
+              ]}
               onPress={() => setActiveTab('confirmation')}
             >
-              <LinearGradient
-                colors={
-                  activeTab === 'confirmation'
-                    ? colors.gradient
-                    : [colors.input, colors.input]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+              <Text
                 style={[
-                  styles.tabGradient,
-                  activeTab !== 'confirmation' && styles.tabGradientInactive,
+                  styles.tabText,
+                  activeTab === 'confirmation' && styles.tabTextActive,
                 ]}
               >
-                <Text style={[styles.tabText, activeTab === 'confirmation' && styles.tabTextActive]}>
-                  Confirmation
-                </Text>
-              </LinearGradient>
+                Confirmation
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -249,35 +239,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     marginBottom: spacing.xl,
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
-    borderRadius: borderRadius.lg,
-    padding: spacing.xs,
-    backgroundColor: colors.input,
   },
   tab: {
     flex: 1,
-    borderRadius: borderRadius.md,
-    overflow: 'hidden',
-    // borderWidth: 1,
-    // borderColor: colors.border,
+    borderRadius: borderRadius.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+  },
+  tabInactive: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   tabActive: {
-    borderColor: 'transparent',
-  },
-  tabGradient: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    alignItems: 'center',
-  },
-  tabGradientInactive: {
-    borderWidth: 1,
-    borderColor: colors.borderSecondary,
+    backgroundColor: colors.input,
+    borderColor: colors.focusRing,
   },
   tabText: {
-    fontSize: typography.sizes.xs,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.tertiary,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: 'rgba(255,255,255,0.75)',
   },
   tabTextActive: {
     color: colors.text.primary,

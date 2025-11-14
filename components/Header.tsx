@@ -168,11 +168,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   aiButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderRadius: borderRadius.base,
     overflow: 'hidden',
-    minHeight: 44,
+    height: 50,
   },
   aiButtonGradient: {
     flexDirection: 'row',
@@ -180,7 +178,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xs,
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    height: 50,
   },
   aiButtonText: {
     fontSize: typography.sizes.md,

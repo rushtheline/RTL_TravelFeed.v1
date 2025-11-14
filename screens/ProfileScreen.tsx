@@ -5,23 +5,23 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Switch,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { 
   Camera, 
   MessageCircle, 
   ThumbsUp, 
   MapPin, 
   Bell, 
-  Mail, 
+  Mail,
   Globe, 
   Lock, 
   HelpCircle,
   ChevronRight,
-  User,
+  Shield,
   LogOut
 } from 'lucide-react-native';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
@@ -137,157 +137,206 @@ export const ProfileScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <AvatarUpload
-            avatarUrl={profile?.avatar_url}
-            username={profile?.username}
+          <LinearGradient
+            colors={['rgba(166,20,112,0.2)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.headerGradient}
           />
-          <Text style={styles.username}>{profile?.username || 'tfletch55'}</Text>
-        </View>
-
-        {/* Stats Cards */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <MessageCircle color={colors.primary} size={24} />
-            </View>
-            <Text style={styles.statValue}>{stats.postsShared}</Text>
-            <Text style={styles.statLabel}>Posts Shared</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <ThumbsUp color={colors.primary} size={24} />
-            </View>
-            <Text style={styles.statValue}>{stats.helpfulVotes}</Text>
-            <Text style={styles.statLabel}>Helpful Votes</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={styles.statIconContainer}>
-              <MapPin color={colors.primary} size={24} />
-            </View>
-            <Text style={styles.statValue}>{stats.airportsVisited}</Text>
-            <Text style={styles.statLabel}>Airports Visited</Text>
-          </View>
-        </View>
-
-        {/* Notifications Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconContainer}>
-              <Bell color={colors.primary} size={20} />
-            </View>
-            <Text style={styles.sectionTitle}>Notifications</Text>
-          </View>
-
-          <View style={styles.settingItem}>
-            <View style={styles.settingIcon}>
-              <Bell color={colors.text.secondary} size={20} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Push Notifications</Text>
-              <Text style={styles.settingSubtitle}>Get alerts for your terminal</Text>
-            </View>
-            <Switch
-              value={pushNotifications}
-              onValueChange={setPushNotifications}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.text.primary}
+          <View style={styles.headerContent}>
+            <AvatarUpload
+              avatarUrl={profile?.avatar_url}
+              username={profile?.username}
             />
-          </View>
+            <Text style={styles.username}>{profile?.username || 'Traveler'}</Text>
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingIcon}>
-              <MapPin color={colors.text.secondary} size={20} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Location Services</Text>
-              <Text style={styles.settingSubtitle}>Auto-detect your terminal</Text>
-            </View>
-            <Switch
-              value={locationServices}
-              onValueChange={setLocationServices}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.text.primary}
-            />
-          </View>
+            <View style={styles.statsGrid}>
+              <LinearGradient
+                colors={['#1F2029', '#2A2B35']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statCard}
+              >
+                <View style={styles.statIcon}>
+                  <MessageCircle size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.statValue}>{stats.postsShared}</Text>
+                <Text style={styles.statLabel}>Posts Shared</Text>
+              </LinearGradient>
 
-          <View style={styles.settingItem}>
-            <View style={styles.settingIcon}>
-              <Mail color={colors.text.secondary} size={20} />
+              <LinearGradient
+                colors={['#1F2029', '#2A2B35']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statCard}
+              >
+                <View style={styles.statIcon}>
+                  <ThumbsUp size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.statValue}>{stats.helpfulVotes}</Text>
+                <Text style={styles.statLabel}>Helpful Votes</Text>
+              </LinearGradient>
+
+              <LinearGradient
+                colors={['#1F2029', '#2A2B35']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statCard}
+              >
+                <View style={styles.statIcon}>
+                  <MapPin size={20} color={colors.primary} />
+                </View>
+                <Text style={styles.statValue}>{stats.airportsVisited}</Text>
+                <Text style={styles.statLabel}>Airports Visited</Text>
+              </LinearGradient>
             </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Email Updates</Text>
-              <Text style={styles.settingSubtitle}>Weekly travel tips & news</Text>
-            </View>
-            <Switch
-              value={emailUpdates}
-              onValueChange={setEmailUpdates}
-              trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={colors.text.primary}
-            />
           </View>
         </View>
 
-        {/* Account Settings Section */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconContainer}>
-              <User color={colors.primary} size={20} />
-            </View>
-            <Text style={styles.sectionTitle}>Account Settings</Text>
-          </View>
-
-          <TouchableOpacity style={styles.menuItem} onPress={handleLanguage}>
-            <View style={styles.settingIcon}>
-              <Globe color={colors.text.secondary} size={20} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Language</Text>
-            </View>
-            <View style={styles.menuRight}>
-              <Text style={styles.menuValue}>English</Text>
-              <ChevronRight color={colors.text.secondary} size={20} />
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handlePrivacySecurity}>
-            <View style={styles.settingIcon}>
-              <Lock color={colors.text.secondary} size={20} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Privacy & Security</Text>
-            </View>
-            <View style={styles.menuRight}>
-              <ChevronRight color={colors.text.secondary} size={20} />
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={handleHelpSupport}>
-            <View style={styles.settingIcon}>
-              <HelpCircle color={colors.text.secondary} size={20} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingTitle}>Help & Support</Text>
-            </View>
-            <View style={styles.menuRight}>
-              <ChevronRight color={colors.text.secondary} size={20} />
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={[styles.menuItem, styles.menuItemBorder, styles.signOutButton]} 
-            onPress={() => setShowSignOutModal(true)}
+        <View style={styles.mainContent}>
+          {/* Notifications Card */}
+          <LinearGradient
+            colors={['#1F2029', '#2A2B35']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.card}
           >
-            <View style={styles.settingIcon}>
-              <LogOut color={colors.error} size={20} />
+            <View style={styles.cardHeader}>
+              <Bell color={colors.primary} size={20} />
+              <Text style={styles.cardTitle}>Notifications</Text>
             </View>
-            <View style={styles.settingContent}>
-              <Text style={[styles.settingTitle, styles.signOutText]}>Sign Out</Text>
+
+            <View style={styles.cardBody}>
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <Bell color={'rgba(255,255,255,0.6)'} size={20} />
+                  <View style={styles.settingText}>
+                    <Text style={styles.settingTitle}>Push Notifications</Text>
+                    <Text style={styles.settingSubtitle}>
+                      Get alerts for your terminal
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={pushNotifications}
+                  onValueChange={setPushNotifications}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: colors.primary }}
+                  thumbColor={colors.text.primary}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              </View>
+
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <MapPin color={'rgba(255,255,255,0.6)'} size={20} />
+                  <View style={styles.settingText}>
+                    <Text style={styles.settingTitle}>Location Services</Text>
+                    <Text style={styles.settingSubtitle}>
+                      Auto-detect your terminal
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={locationServices}
+                  onValueChange={setLocationServices}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: colors.primary }}
+                  thumbColor={colors.text.primary}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              </View>
+
+              <View style={styles.settingRow}>
+                <View style={styles.settingLeft}>
+                  <Mail color={'rgba(255,255,255,0.6)'} size={20} />
+                  <View style={styles.settingText}>
+                    <Text style={styles.settingTitle}>Email Updates</Text>
+                    <Text style={styles.settingSubtitle}>
+                      Weekly travel tips & news
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={emailUpdates}
+                  onValueChange={setEmailUpdates}
+                  trackColor={{ false: 'rgba(255,255,255,0.2)', true: colors.primary }}
+                  thumbColor={colors.text.primary}
+                  ios_backgroundColor="rgba(255,255,255,0.2)"
+                />
+              </View>
             </View>
-          </TouchableOpacity>
+          </LinearGradient>
+
+          {/* Account Settings Card */}
+          <LinearGradient
+            colors={['#1F2029', '#2A2B35']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.card}
+          >
+            <View style={styles.cardHeader}>
+              <Shield color={colors.primary} size={20} />
+              <Text style={styles.cardTitle}>Account Settings</Text>
+            </View>
+
+            <View style={styles.menuList}>
+              <TouchableOpacity
+                style={styles.menuButton}
+                activeOpacity={0.85}
+                onPress={handleLanguage}
+              >
+                <View style={styles.menuLeft}>
+                  <Globe size={20} color={'rgba(255,255,255,0.6)'} />
+                  <Text style={styles.menuLabel}>Language</Text>
+                </View>
+                <View style={styles.menuRight}>
+                  <Text style={styles.menuValue}>English</Text>
+                  <ChevronRight size={20} color={'rgba(255,255,255,0.5)'} />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.menuButton}
+                activeOpacity={0.85}
+                onPress={handlePrivacySecurity}
+              >
+                <View style={styles.menuLeft}>
+                  <Lock size={20} color={'rgba(255,255,255,0.6)'} />
+                  <Text style={styles.menuLabel}>Privacy & Security</Text>
+                </View>
+                <View style={styles.menuRight}>
+                  <ChevronRight size={20} color={'rgba(255,255,255,0.5)'} />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.menuButton}
+                activeOpacity={0.85}
+                onPress={handleHelpSupport}
+              >
+                <View style={styles.menuLeft}>
+                  <HelpCircle size={20} color={'rgba(255,255,255,0.6)'} />
+                  <Text style={styles.menuLabel}>Help & Support</Text>
+                </View>
+                <View style={styles.menuRight}>
+                  <ChevronRight size={20} color={'rgba(255,255,255,0.5)'} />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.menuButton, styles.signOutButton]}
+                activeOpacity={0.85}
+                onPress={() => setShowSignOutModal(true)}
+              >
+                <View style={styles.menuLeft}>
+                  <LogOut size={20} color={colors.error} />
+                  <Text style={[styles.menuLabel, styles.signOutText]}>
+                    Sign Out
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
         </View>
       </ScrollView>
 
@@ -307,155 +356,171 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingBottom: 100, // Extra space for tab bar
+    paddingBottom: spacing.xxxl,
   },
   profileHeader: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-    paddingTop: spacing.xxl,
-  },
-  avatarContainer: {
     position: 'relative',
-    marginBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xxxl,
+    paddingBottom: spacing.lg,
   },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  avatarPlaceholder: {
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 48,
-    fontWeight: typography.weights.bold,
-    color: colors.text.primary,
-  },
-  cameraButton: {
+  headerGradient: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
+    left: 0,
     right: 0,
-    backgroundColor: colors.primary,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    height: 192,
+  },
+  headerContent: {
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: colors.background,
+    position: 'relative',
   },
   username: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
     fontSize: typography.sizes.xl,
     fontWeight: typography.weights.semibold,
     color: colors.text.primary,
+    textAlign: 'center',
   },
-  statsContainer: {
+  statsGrid: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.lg,
-    gap: spacing.sm,
+    marginTop: spacing.lg,
+    gap: 12,
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  statIconContainer: {
-    marginBottom: spacing.xs,
+  statIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(166,20,112,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.sm,
   },
   statValue: {
-    fontSize: typography.sizes.xl,
+    fontSize: typography.sizes.lg,
     color: colors.text.primary,
-    marginBottom: spacing.xs,
+    fontWeight: typography.weights.semibold,
   },
   statLabel: {
     fontSize: typography.sizes.xs,
-    color: colors.text.secondary,
+    color: colors.text.tertiary,
     textAlign: 'center',
   },
-  section: {
-    marginTop: spacing.lg,
-    marginHorizontal: spacing.md,
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
+  mainContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxxl,
+    gap: spacing.lg,
+    maxWidth: 672,
+    alignSelf: 'center',
+    width: '100%',
   },
-  sectionHeader: {
+  card: {
+    borderRadius: borderRadius.xl,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    elevation: 10,
+    gap: spacing.md,
+  },
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    gap: spacing.sm,
   },
-  sectionIconContainer: {
-    marginRight: spacing.sm,
-  },
-  sectionTitle: {
+  cardTitle: {
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.semibold,
     color: colors.text.primary,
   },
-  settingItem: {
+  cardBody: {
+    gap: spacing.md,
+  },
+  settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    justifyContent: 'space-between',
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
   },
-  menuItem: {
+  settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.md,
-  },
-  menuItemBorder: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  settingIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  settingContent: {
+    gap: spacing.md,
     flex: 1,
   },
+  settingText: {
+    flexShrink: 1,
+    gap: 2,
+  },
   settingTitle: {
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.sm,
     fontWeight: typography.weights.medium,
     color: colors.text.primary,
-    marginBottom: 2,
   },
   settingSubtitle: {
     fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
+    color: colors.text.tertiary,
+  },
+  menuList: {
+    gap: spacing.sm,
+  },
+  menuButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.lg,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+  },
+  menuLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  menuLabel: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: colors.text.primary,
   },
   menuRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   menuValue: {
-    fontSize: typography.sizes.md,
-    color: colors.text.secondary,
-  },
-  menuArrow: {
-    fontSize: 24,
-    color: colors.text.muted,
+    fontSize: typography.sizes.sm,
+    color: colors.text.tertiary,
   },
   signOutButton: {
-    marginTop: spacing.md,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
   signOutText: {
     color: colors.error,

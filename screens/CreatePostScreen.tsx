@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,8 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
-  FlatList,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
@@ -20,7 +19,25 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { PostCategory } from '../types/database.types';
 import { MentionInput } from '../components/MentionInput';
-import { Brain, CameraIcon, ChevronDown, DoorClosed, Hamburger, Lock, MapPin, MessageCircle, SquareParking, Timer, VideoIcon, X } from 'lucide-react-native';
+import { CameraIcon, ChevronDown, Hamburger, Lock, MapPin, MessageCircle, SquareParking, Timer, X } from 'lucide-react-native';
+
+type LocationOption = {
+  label: string;
+  value: string;
+  scope: 'airport' | 'terminal';
+  categories: PostCategory[];
+  terminals?: string[];
+  disabled?: boolean;
+  meta?: string;
+};
+
+type MediaItem = {
+  id: string;
+  uri: string;
+  type: 'image' | 'video';
+  uploading?: boolean;
+  progress?: number;
+};
 
 interface CreatePostScreenProps {
   onClose: () => void;
@@ -33,30 +50,176 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
   airportId,
   terminalId,
 }) => {
+  const insets = useSafeAreaInsets();
   const { profile } = useAuth();
+  const CHARACTER_LIMIT = 280;
   const [content, setContent] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PostCategory>('general');
   const [locationText, setLocationText] = useState('');
-  const [mediaUri, setMediaUri] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
-  
-  // Location selection state
+  const [visibilityScope, setVisibilityScope] = useState<'airport' | 'terminal' | 'gate'>('terminal');
+  const [locationToast, setLocationToast] = useState<string | null>(null);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [terminals, setTerminals] = useState<any[]>([]);
   const [selectedTerminal, setSelectedTerminal] = useState<any>(null);
-  const [selectedLocation, setSelectedLocation] = useState<string>('');
-  const [customLocation, setCustomLocation] = useState('');
-  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const characterProgress = Math.min(content.length / CHARACTER_LIMIT, 1);
+  const charCountColor =
+    characterProgress > 0.95
+      ? colors.error
+      : characterProgress > 0.75
+      ? '#F59E0B'
+      : colors.text.secondary;
+
+  useEffect(() => {
+    if (!locationToast) return;
+    const timeout = setTimeout(() => setLocationToast(null), 2500);
+    return () => clearTimeout(timeout);
+  }, [locationToast]);
+
+  useEffect(() => {
+    if (selectedCategory === 'parking') {
+      setVisibilityScope('airport');
+    } else if (visibilityScope === 'airport') {
+      setVisibilityScope('terminal');
+    }
+
+    if (selectedCategory !== 'wait_time' && visibilityScope === 'gate') {
+      setVisibilityScope('terminal');
+    }
+
+    if (!categoryRequiresTerminal(selectedCategory)) {
+      setLocationText('');
+      setSelectedLocationId('');
+    }
+  }, [selectedCategory]);
+
+  const categoryRequiresTerminal = (category: PostCategory) => {
+    return ['wait_time', 'food'].includes(category);
+  };
+
+  const buildLocationOptions = (): LocationOption[] => {
+    const baseOptions: LocationOption[] = [
+      {
+        label: 'TSA PreCheck',
+        value: 'TSA PreCheck',
+        scope: 'terminal',
+        categories: ['tsa_update'],
+      },
+      {
+        label: 'TSA Standard',
+        value: 'TSA Standard',
+        scope: 'terminal',
+        categories: ['tsa_update'],
+      },
+      {
+        label: 'TSA CLEAR',
+        value: 'TSA CLEAR',
+        scope: 'terminal',
+        categories: ['tsa_update'],
+      },
+      {
+        label: 'Food Court',
+        value: 'Food Court',
+        scope: 'terminal',
+        categories: ['food', 'wait_time', 'general'],
+      },
+      {
+        label: 'Restrooms',
+        value: 'Restrooms',
+        scope: 'terminal',
+        categories: ['wait_time', 'general'],
+      },
+      {
+        label: 'Coffee Stand',
+        value: 'Coffee Stand',
+        scope: 'terminal',
+        categories: ['food', 'wait_time', 'general'],
+      },
+      {
+        label: 'Economy Parking',
+        value: 'Economy Parking',
+        scope: 'airport',
+        categories: ['parking'],
+      },
+      {
+        label: 'Deck Parking',
+        value: 'Deck Parking',
+        scope: 'airport',
+        categories: ['parking'],
+      },
+    ];
+
+    if (selectedTerminal?.code) {
+      const terminalCode = selectedTerminal.code.toUpperCase();
+      const gates = Array.from({ length: 12 }).map((_, index) => {
+        const gateNumber = String(index + 1).padStart(2, '0');
+        return `${terminalCode}${gateNumber}`;
+      });
+
+      gates.forEach((gate) => {
+        baseOptions.push({
+          label: `Gate ${gate}`,
+          value: `Gate ${gate}`,
+          scope: 'terminal',
+          categories: ['wait_time', 'general'],
+          terminals: [selectedTerminal.id],
+        });
+      });
+    }
+
+    return baseOptions;
+  };
+
+  const locationOptions = useMemo(() => {
+    const options = buildLocationOptions().map((option) => {
+      const requiresTerminal = option.scope === 'terminal';
+      const terminalMismatch =
+        requiresTerminal &&
+        option.terminals &&
+        selectedTerminal &&
+        !option.terminals.includes(selectedTerminal.id);
+
+      const disabledNoTerminal = requiresTerminal && !selectedTerminal;
+      const disabledMismatch = terminalMismatch;
+      const disabledScope =
+        categoryRequiresTerminal(selectedCategory) && option.scope === 'airport';
+
+      const disabled = disabledNoTerminal || disabledMismatch || disabledScope;
+
+      let meta: string | undefined;
+      if (disabledNoTerminal) {
+        meta = 'Select a terminal first.';
+      } else if (disabledMismatch) {
+        meta = selectedTerminal
+          ? `Not in ${selectedTerminal.name}.`
+          : 'Not in this terminal.';
+      } else if (disabledScope) {
+        meta = 'Unavailable for this category.';
+      }
+
+      return {
+        ...option,
+        disabled,
+        meta,
+      };
+    });
+
+    return options.filter((option) =>
+      option.categories.includes(selectedCategory) || option.categories.includes('general')
+    );
+  }, [
+    selectedCategory,
+    selectedTerminal,
+  ]);
 
   const categories: { key: PostCategory; label: string; emoji: React.ReactNode }[] = [
-    { key: 'helpful_tip', label: 'Helpful Tip', emoji: <Brain color={colors.text.secondary} size={18}/> },
-    { key: 'tsa_update', label: 'TSA Update', emoji: <Lock color={colors.text.secondary} size={18}/> },
-    { key: 'gate_change', label: 'Gate Change', emoji: <DoorClosed color={colors.text.secondary} size={18}/> },
-    { key: 'wait_time', label: 'Wait Time', emoji: <Timer color={colors.text.secondary} size={18}/> },
-    { key: 'food', label: 'Food', emoji: <Hamburger color={colors.text.secondary} size={18}/> },
-    { key: 'parking', label: 'Parking', emoji: <SquareParking color={colors.text.secondary} size={18}/> },
-    { key: 'general', label: 'General', emoji: <MessageCircle color={colors.text.secondary} size={18}/> },
+    { key: 'general', label: 'General', emoji: <MessageCircle color={colors.text.secondary} size={18} /> },
+    { key: 'tsa_update', label: 'TSA Update', emoji: <Lock color={colors.text.secondary} size={18} /> },
+    { key: 'wait_time', label: 'Wait Time', emoji: <Timer color={colors.text.secondary} size={18} /> },
+    { key: 'food', label: 'Food', emoji: <Hamburger color={colors.text.secondary} size={18} /> },
+    { key: 'parking', label: 'Parking', emoji: <SquareParking color={colors.text.secondary} size={18} /> },
   ];
 
   // Fetch terminals on mount
@@ -87,44 +250,127 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
     }
   };
 
-  const handleSelectLocation = (location: string) => {
-    if (location === 'custom') {
-      setShowCustomInput(true);
-      setSelectedLocation('');
-    } else {
-      setSelectedLocation(location);
-      setShowCustomInput(false);
-      setCustomLocation('');
-      
-      // Build location text
-      const terminalText = selectedTerminal ? `${selectedTerminal.name}` : '';
-      setLocationText(`${terminalText}${location ? `, ${location}` : ''}`);
+  const handleSelectLocation = (option: LocationOption) => {
+    if (option.disabled) {
+      setLocationToast(option.meta || 'Location not available for this terminal.');
+      return;
+    }
+
+    const terminalText =
+      option.scope === 'terminal' && selectedTerminal ? selectedTerminal.name : '';
+    const newLocation =
+      option.scope === 'terminal'
+        ? `${terminalText}${terminalText ? ' • ' : ''}${option.label}`
+        : option.label;
+
+    setSelectedLocationId(option.value);
+    setLocationText(newLocation);
       setShowLocationModal(false);
+  };
+
+  const handleTerminalSelect = (terminal: any) => {
+    setSelectedTerminal(terminal);
+    if (selectedCategory === 'parking') {
+      setVisibilityScope('airport');
+    } else if (visibilityScope === 'airport') {
+      setVisibilityScope('terminal');
+    }
+
+    if (locationText && terminal && !locationText.includes(terminal.name)) {
+      setLocationText('');
+      setSelectedLocationId('');
+      setLocationToast(`Location cleared. Pick a spot in ${terminal.name}.`);
     }
   };
 
-  const handleCustomLocationSubmit = () => {
-    if (customLocation.trim()) {
-      const terminalText = selectedTerminal ? `${selectedTerminal.name}` : '';
-      setLocationText(`${terminalText}, ${customLocation.trim()}`);
-      setSelectedLocation(customLocation.trim());
-      setShowLocationModal(false);
-      setShowCustomInput(false);
-    }
-  };
-
-  const commonLocations = [
-    { label: 'TSA Security', value: 'TSA Security' },
-    { label: 'Baggage Claim', value: 'Baggage Claim' },
-    { label: 'Food Court', value: 'Food Court' },
-    { label: 'Restrooms', value: 'Restrooms' },
-    { label: 'Gate Area', value: 'Gate Area' },
-    { label: 'Lounge', value: 'Lounge' },
-    { label: 'Shops', value: 'Shops' },
-    { label: 'Custom Location', value: 'custom' },
+  const visibilityOptions: { id: 'airport' | 'terminal' | 'gate'; label: string }[] = [
+    { id: 'airport', label: 'Airport-wide' },
+    { id: 'terminal', label: 'Terminal-only' },
+    { id: 'gate', label: 'Gate-only' },
   ];
 
-  const pickMedia = async (type: 'image' | 'video') => {
+  const renderLocationModal = () => (
+    <Modal
+      visible={showLocationModal}
+      transparent
+      animationType="slide"
+      onRequestClose={() => setShowLocationModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Select Location</Text>
+            <TouchableOpacity onPress={() => setShowLocationModal(false)}>
+              <X size={24} color={colors.text.secondary} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalBody}>
+            <Text style={styles.modalSectionTitle}>Terminal</Text>
+            <View style={styles.terminalGrid}>
+              {terminals.map((terminal) => {
+                const isSelected = selectedTerminal?.id === terminal.id;
+                return (
+                  <TouchableOpacity
+                    key={terminal.id}
+                    style={[styles.terminalChip, isSelected && styles.terminalChipSelected]}
+                    onPress={() => handleTerminalSelect(terminal)}
+                  >
+                    <Text
+                      style={[
+                        styles.terminalChipText,
+                        isSelected && styles.terminalChipTextSelected,
+                      ]}
+                    >
+                      {terminal.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            <Text style={[styles.modalSectionTitle, styles.locationListTitle]}>Locations</Text>
+            {locationOptions.map((option) => {
+              const isSelected = selectedLocationId === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.label}
+                  style={[
+                    styles.locationItem,
+                    isSelected && styles.locationItemSelected,
+                    option.disabled && styles.locationItemDisabled,
+                  ]}
+                  disabled={option.disabled}
+                  onPress={() => handleSelectLocation(option)}
+                >
+                  <View>
+                    <Text
+                      style={[
+                        styles.locationItemText,
+                        isSelected && styles.locationItemTextSelected,
+                        option.disabled && styles.locationItemTextDisabled,
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                    <Text style={styles.locationScopeLabel}>
+                      {option.scope === 'airport' ? 'Airport-wide' : 'Terminal specific'}
+                    </Text>
+                  </View>
+                  {option.disabled && (
+                    <Text style={styles.locationDisabledHint}>Unavailable</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  const launchMediaPicker = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('Permission needed', 'Please grant camera roll permissions');
@@ -132,17 +378,29 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: type === 'image' ? ('images' as any) : ('videos' as any),
-      allowsEditing: type === 'image',
-      aspect: type === 'image' ? [16, 9] : undefined,
+      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      allowsMultipleSelection: false,
+      allowsEditing: false,
       quality: 0.8,
-      videoMaxDuration: 60, // 60 seconds max for videos
+      videoMaxDuration: 60,
     });
 
     if (!result.canceled) {
-      setMediaUri(result.assets[0].uri);
-      setMediaType(type);
+      const asset = result.assets[0];
+      if (!asset) return;
+      const mediaType: 'image' | 'video' =
+        asset.type === 'video' ? 'video' : 'image';
+      const newItem = {
+        id: `${asset.assetId || asset.uri}-${Date.now()}`,
+        uri: asset.uri,
+        type: mediaType,
+      };
+      setMediaItems([newItem]);
     }
+  };
+
+  const handleRemoveMedia = (id: string) => {
+    setMediaItems((prev) => prev.filter((item) => item.id !== id));
   };
 
   const uploadMedia = async (uri: string): Promise<string | null> => {
@@ -166,7 +424,8 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
         'webm': 'video/webm',
       };
       
-      const mimeType = mimeTypeMap[fileExt] || (mediaType === 'video' ? 'video/mp4' : 'image/jpeg');
+      const isVideoExt = ['mp4', 'mov', 'avi', 'webm', 'mkv'].includes(fileExt);
+      const mimeType = mimeTypeMap[fileExt] || (isVideoExt ? 'video/mp4' : 'image/jpeg');
 
       // Use arraybuffer for React Native compatibility
       const response = await fetch(uri);
@@ -194,21 +453,30 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!content.trim()) {
-      Alert.alert('Error', 'Please enter some content');
+    const finalContent = content.trim();
+    if (!finalContent && mediaItems.length === 0) {
+      Alert.alert('Add more details', 'Add media or a short caption before posting.');
       return;
     }
 
-    if (!locationText.trim()) {
+    if (categoryRequiresTerminal(selectedCategory) && !locationText.trim()) {
       Alert.alert('Error', 'Please select a location');
+      return;
+    }
+
+    if (categoryRequiresTerminal(selectedCategory) && !selectedTerminal) {
+      Alert.alert('Select terminal', 'Choose a terminal to add location-specific details.');
       return;
     }
 
     setLoading(true);
     try {
-      let mediaUrl = null;
-      if (mediaUri) {
-        mediaUrl = await uploadMedia(mediaUri);
+      let uploadedMediaUrl: string | null = null;
+      let uploadedMediaType: 'image' | 'video' | null = null;
+      if (mediaItems.length > 0) {
+        const firstItem = mediaItems[0];
+        uploadedMediaUrl = await uploadMedia(firstItem.uri);
+        uploadedMediaType = firstItem.type;
       }
 
       const { error } = await supabase.from('posts').insert({
@@ -216,9 +484,9 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
         airport_id: airportId,
         terminal_id: terminalId || null,
         category: selectedCategory,
-        content: content.trim(),
-        media_url: mediaUrl,
-        media_type: mediaUrl ? mediaType : null,
+        content: finalContent,
+        media_url: uploadedMediaUrl,
+        media_type: uploadedMediaUrl ? uploadedMediaType : null,
         location_text: locationText.trim() || null,
       });
 
@@ -234,198 +502,199 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
     }
   };
 
+  const hasMedia = mediaItems.length > 0;
+  const topTitle = 'Create Post';
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={onClose}>
-          <Text style={styles.cancelText}>Cancel</Text>
+      <View style={styles.topBar}>
+        <TouchableOpacity style={styles.iconButton} onPress={onClose}>
+          <X size={20} color={colors.text.secondary} />
         </TouchableOpacity>
-        <Text style={styles.title}>Create Post</Text>
-        <TouchableOpacity onPress={handleSubmit} disabled={loading}>
-          {loading ? (
-            <ActivityIndicator color={colors.primary} />
-          ) : (
-            <Text style={styles.postText}>Post</Text>
-          )}
+        <Text style={styles.topBarTitle}>{topTitle}</Text>
+        <TouchableOpacity
+          style={styles.draftButton}
+          onPress={() => Alert.alert('Drafts coming soon')}
+        >
+          <Text style={styles.draftText}>Draft</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
-        <Text style={styles.label}>Category</Text>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.card}>
+          <View style={styles.captionField}>
+            <MentionInput
+              style={styles.captionInput}
+              placeholder="Share an update with travelers... (use @username to mention)"
+              value={content}
+              onChangeText={setContent}
+              multiline
+              maxLength={CHARACTER_LIMIT}
+            />
+            <TouchableOpacity
+              style={styles.captionMediaButton}
+              onPress={launchMediaPicker}
+            >
+              <CameraIcon size={18} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.captionMeta}>
+            <Text style={[styles.charCount, { color: charCountColor }]}>
+              {content.length}/{CHARACTER_LIMIT}
+            </Text>
+          </View>
+          <Text style={styles.helperText}>
+            Keep it concise—posts perform best under 280 characters.
+          </Text>
+        </View>
+        {hasMedia && (
+          <View style={styles.card}>
+            {mediaItems.map((item) => (
+              <View style={styles.mediaThumbWrapper} key={item.id}>
+                {item.type === 'video' ? (
+                  <Video
+                    source={{ uri: item.uri }}
+                    style={styles.mediaThumb}
+                    resizeMode={'cover' as any}
+                    shouldPlay={false}
+                  />
+                ) : (
+                  <Image source={{ uri: item.uri }} style={styles.mediaThumb} />
+                )}
+                <TouchableOpacity
+                  style={styles.mediaThumbRemove}
+                  onPress={() => handleRemoveMedia(item.id)}
+                >
+                  <Text style={styles.removeMediaText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={styles.card}>
+          <Text style={styles.cardLabel}>Category</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.categoriesScroll}
+            contentContainerStyle={styles.categoryScroll}
         >
-          {categories.map((cat) => (
+            {categories.map((cat) => {
+              const isSelected = selectedCategory === cat.key;
+              return (
             <TouchableOpacity
               key={cat.key}
               style={[
                 styles.categoryChip,
-                selectedCategory === cat.key && styles.categoryChipSelected,
+                    isSelected ? styles.categoryChipSelected : styles.categoryChipDefault,
               ]}
               onPress={() => setSelectedCategory(cat.key)}
+                  activeOpacity={0.9}
             >
-              <Text style={styles.categoryEmoji}>{cat.emoji}</Text>
               <Text
                 style={[
-                  styles.categoryLabel,
-                  selectedCategory === cat.key && styles.categoryLabelSelected,
+                      styles.categoryChipText,
+                      isSelected && styles.categoryChipTextSelected,
                 ]}
               >
-                {cat.label}
+                    {cat.emoji} {cat.label}
               </Text>
             </TouchableOpacity>
-          ))}
+              );
+            })}
         </ScrollView>
+        </View>
 
-        <Text style={styles.label}>Content</Text>
-        <MentionInput
-          style={styles.textArea}
-          placeholder="Share something helpful with fellow travelers... (use @username to mention)"
-          value={content}
-          onChangeText={setContent}
-          multiline
-          maxLength={1000}
-        />
-
-        <Text style={styles.label}>
-          Location <Text style={styles.required}>*</Text>
-        </Text>
+        {(selectedCategory === 'wait_time' || selectedCategory === 'food') && (
+          <View style={styles.card}>
+            <View style={styles.cardHeaderRow}>
+              <Text style={styles.cardLabel}>Location</Text>
+              <View style={styles.requiredChip}>
+                <Text style={styles.requiredChipText}>Required</Text>
+              </View>
+            </View>
+            {locationToast && <Text style={styles.toastText}>{locationToast}</Text>}
         <TouchableOpacity
           style={styles.locationButton}
           onPress={() => setShowLocationModal(true)}
         >
           <MapPin size={20} color={colors.text.secondary} />
-          <Text style={[styles.locationButtonText, !locationText && styles.locationPlaceholder]}>
-            {locationText || 'Select terminal and location'}
+              <Text
+                style={[
+                  styles.locationButtonText,
+                  !locationText && styles.locationPlaceholder,
+                ]}
+              >
+                {locationText || 'Select terminal location'}
           </Text>
-          <ChevronDown size={20} color={colors.text.secondary} />
-        </TouchableOpacity>
-
-        {mediaUri && (
-          <View style={styles.mediaPreview}>
-            {mediaType === 'video' ? (
-              <Video
-                source={{ uri: mediaUri }}
-                style={styles.mediaImage}
-                useNativeControls
-                resizeMode={'contain' as any}
-                isLooping
+              <ChevronDown
+                size={20}
+                color={colors.text.secondary}
+                style={[styles.locationChevron, showLocationModal && styles.locationChevronOpen]}
               />
-            ) : (
-              <Image source={{ uri: mediaUri }} style={styles.mediaImage} />
-            )}
-            <TouchableOpacity
-              style={styles.removeMediaButton}
-              onPress={() => {
-                setMediaUri(null);
-                setMediaType(null);
-              }}
-            >
-              <Text style={styles.removeMediaText}>✕</Text>
             </TouchableOpacity>
-          </View>
-        )}
 
-        <View style={styles.mediaButtons}>
+            <View style={styles.scopeRow}>
+              {visibilityOptions.map((option) => {
+                const disabled =
+                  option.id === 'airport' ||
+                  (option.id === 'gate' && selectedCategory !== 'wait_time');
+                const isActive = visibilityScope === option.id;
+                return (
           <TouchableOpacity 
-            style={styles.addMediaButton} 
-            onPress={() => pickMedia('image')}
-          >
-            <CameraIcon size={20} color={colors.text.secondary} />
-            <Text style={styles.addMediaText}>Add Photo</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.addMediaButton} 
-            onPress={() => pickMedia('video')}
-          >
-            <VideoIcon size={20} color={colors.text.secondary} />
-            <Text style={styles.addMediaText}>Add Video</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-
-      {/* Location Selection Modal */}
-      <Modal
-        visible={showLocationModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowLocationModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Location</Text>
-              <TouchableOpacity onPress={() => setShowLocationModal(false)}>
-                <X size={24} color={colors.text.secondary} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={styles.modalBody}>
-              {/* Terminal Selection */}
-              <Text style={styles.modalSectionTitle}>Terminal</Text>
-              <View style={styles.terminalGrid}>
-                {terminals.map((terminal) => (
-                  <TouchableOpacity
-                    key={terminal.id}
+                    key={option.id}
                     style={[
-                      styles.terminalChip,
-                      selectedTerminal?.id === terminal.id && styles.terminalChipSelected,
+                      styles.scopeChip,
+                      isActive && styles.scopeChipActive,
+                      disabled && styles.scopeChipDisabled,
                     ]}
-                    onPress={() => setSelectedTerminal(terminal)}
+                    onPress={() => !disabled && setVisibilityScope(option.id)}
+                    disabled={disabled}
                   >
                     <Text
                       style={[
-                        styles.terminalChipText,
-                        selectedTerminal?.id === terminal.id && styles.terminalChipTextSelected,
+                        styles.scopeChipText,
+                        isActive && styles.scopeChipTextActive,
+                        disabled && styles.scopeChipTextDisabled,
                       ]}
                     >
-                      {terminal.name}
+                      {option.label}
                     </Text>
                   </TouchableOpacity>
-                ))}
+                );
+              })}
               </View>
-
-              {/* Location Selection */}
-              {selectedTerminal && (
-                <>
-                  <Text style={styles.modalSectionTitle}>Specific Location</Text>
-                  {commonLocations.map((loc) => (
-                    <TouchableOpacity
-                      key={loc.value}
-                      style={styles.locationItem}
-                      onPress={() => handleSelectLocation(loc.value)}
-                    >
-                      <Text style={styles.locationItemText}>{loc.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-
-                  {showCustomInput && (
-                    <View style={styles.customInputContainer}>
-                      <TextInput
-                        style={styles.customInput}
-                        placeholder="Enter custom location (e.g., Gate B12, Starbucks)"
-                        placeholderTextColor={colors.text.muted}
-                        value={customLocation}
-                        onChangeText={setCustomLocation}
-                        autoFocus
-                      />
-                      <TouchableOpacity
-                        style={styles.customSubmitButton}
-                        onPress={handleCustomLocationSubmit}
-                      >
-                        <Text style={styles.customSubmitText}>Done</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </>
-              )}
-            </ScrollView>
           </View>
-        </View>
-      </Modal>
+        )}
+      </ScrollView>
+
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            paddingBottom: spacing.lg + insets.bottom,
+          },
+        ]}
+      >
+        <TouchableOpacity
+          style={[
+            styles.primaryAction,
+            (loading ||
+              (categoryRequiresTerminal(selectedCategory) && !locationText.trim())) &&
+              styles.primaryActionDisabled,
+          ]}
+          onPress={handleSubmit}
+          disabled={loading || (categoryRequiresTerminal(selectedCategory) && !locationText.trim())}
+        >
+          {loading ? (
+            <ActivityIndicator color={colors.text.primary} />
+          ) : (
+            <Text style={styles.primaryActionText}>Post</Text>
+          )}
+        </TouchableOpacity>
+          </View>
+
+      {renderLocationModal()}
     </SafeAreaView>
   );
 };
@@ -435,175 +704,308 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  header: {
+  topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  cancelText: {
-    fontSize: typography.sizes.md,
-    color: colors.text.secondary,
-  },
-  title: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
-  },
-  postText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-  },
-  label: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
-    color: colors.text.secondary,
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  categoriesScroll: {
-    marginBottom: spacing.sm,
-  },
-  categoryChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.sm,
-    marginRight: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  categoryChipSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  categoryEmoji: {
-    fontSize: typography.sizes.md,
-    marginRight: spacing.xs,
-  },
-  categoryLabel: {
-    fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
-  },
-  categoryLabelSelected: {
-    color: colors.text.primary,
-    fontWeight: typography.weights.semibold,
-  },
-  textArea: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    minHeight: 120,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  mediaPreview: {
-    marginTop: spacing.md,
-    position: 'relative',
-  },
-  mediaImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: borderRadius.md,
-  },
-  removeMediaButton: {
-    position: 'absolute',
-    top: spacing.sm,
-    right: spacing.sm,
-    backgroundColor: colors.background,
-    width: 32,
-    height: 32,
+  iconButton: {
+    width: 36,
+    height: 36,
     borderRadius: borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  removeMediaText: {
+  topBarTitle: {
     fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.semibold,
     color: colors.text.primary,
   },
-  mediaButtons: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  addMediaButton: {
-    flex: 1,
-    flexDirection: 'row',
+  draftButton: {
+    minWidth: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
+  },
+  draftText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.secondary,
+  },
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xxxxl,
+    paddingTop: spacing.lg,
+    gap: spacing.lg,
+  },
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
+    padding: spacing.lg,
+    gap: spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 8,
   },
-  addMediaIcon: {
-    fontSize: typography.sizes.lg,
-    marginRight: spacing.sm,
-  },
-  addMediaText: {
+  cardLabel: {
     fontSize: typography.sizes.md,
     fontWeight: typography.weights.medium,
     color: colors.text.primary,
-    paddingLeft: spacing.sm,
   },
-  xpInfo: {
-    backgroundColor: colors.card,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginTop: spacing.md,
-    marginBottom: spacing.xl,
+  captionField: {
+    position: 'relative',
   },
-  xpInfoText: {
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  charCount: {
     fontSize: typography.sizes.sm,
-    color: colors.text.secondary,
+    fontWeight: typography.weights.medium,
+  },
+  helperText: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.tertiary,
+  },
+  categoryScroll: {
+    gap: spacing.sm,
+  },
+  categoryChip: {
+    borderRadius: borderRadius.lg,
+    marginRight: spacing.sm,
+    overflow: 'hidden',
+  },
+  categoryChipDefault: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  categoryChipSelected: {
+    backgroundColor: 'rgba(166,20,112,0.25)',
+    borderWidth: 1,
+    borderColor: colors.primary,
+  },
+  categoryChipText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
+    color: 'rgba(255,255,255,0.85)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  categoryChipTextSelected: {
+    color: colors.text.primary,
+  },
+  mediaCarousel: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  mediaThumbWrapper: {
+    width: 160,
+    height: 200,
+    borderRadius: borderRadius.lg,
+    overflow: 'hidden',
+    marginRight: spacing.sm,
+  },
+  mediaThumb: {
+    width: '100%',
+    height: '100%',
+    borderRadius: borderRadius.lg,
+  },
+  mediaThumbRemove: {
+    position: 'absolute',
+    top: spacing.sm,
+    right: spacing.sm,
+    width: 28,
+    height: 28,
+    borderRadius: borderRadius.full,
+    backgroundColor: 'rgba(15,15,20,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+  },
+  removeMediaText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.primary,
+  },
+  mediaAddButton: {
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  mediaAddTitle: {
+    fontSize: typography.sizes.md,
+    fontWeight: typography.weights.medium,
+    color: colors.text.primary,
+  },
+  mediaAddSubtitle: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.tertiary,
     textAlign: 'center',
   },
-  required: {
-    color: colors.error,
+  addMoreMediaButton: {
+    marginTop: spacing.md,
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  addMoreMediaText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.primary,
+  },
+  requiredChip: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+  },
+  requiredChipText: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.secondary,
+    fontWeight: typography.weights.medium,
+  },
+  toastText: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.tertiary,
   },
   locationButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
     gap: spacing.sm,
   },
   locationButtonText: {
     flex: 1,
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.sm,
     color: colors.text.primary,
   },
   locationPlaceholder: {
     color: colors.text.muted,
   },
+  locationChevron: {
+    transform: [{ rotate: '0deg' }],
+  },
+  locationChevronOpen: {
+    transform: [{ rotate: '180deg' }],
+  },
+  scopeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  scopeChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  scopeChipActive: {
+    backgroundColor: 'rgba(166,20,112,0.25)',
+    borderColor: colors.primary,
+  },
+  scopeChipDisabled: {
+    opacity: 0.4,
+  },
+  scopeChipText: {
+    fontSize: typography.sizes.xs,
+    color: 'rgba(255,255,255,0.75)',
+  },
+  scopeChipTextActive: {
+    color: colors.text.primary,
+  },
+  scopeChipTextDisabled: {
+    color: colors.text.muted,
+  },
+  captionInput: {
+    backgroundColor: colors.input,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    paddingRight: spacing.xxxl,
+    fontSize: typography.sizes.md,
+    color: colors.text.primary,
+    minHeight: 120,
+    borderWidth: 1,
+    borderColor: colors.borderSecondary,
+    textAlignVertical: 'top',
+  },
+  captionMediaButton: {
+    position: 'absolute',
+    right: spacing.sm,
+    top: spacing.sm,
+    width: 36,
+    height: 36,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  captionMeta: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  bottomBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.background,
+  },
+  secondaryAction: {
+    flex: 1,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  secondaryActionText: {
+    fontSize: typography.sizes.sm,
+    color: colors.text.primary,
+  },
+  primaryAction: {
+    flex: 1.2,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.primary,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  primaryActionDisabled: {
+    opacity: 0.6,
+  },
+  primaryActionText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
+    color: colors.text.primary,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
@@ -611,51 +1013,54 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
     maxHeight: '80%',
+    paddingBottom: spacing.lg,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    borderBottomColor: colors.borderSecondary,
   },
   modalTitle: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.semibold,
     color: colors.text.primary,
   },
   modalBody: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
   },
   modalSectionTitle: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.semibold,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.medium,
     color: colors.text.primary,
-    marginBottom: spacing.sm,
     marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  locationListTitle: {
+    marginTop: spacing.lg,
   },
   terminalGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-    marginBottom: spacing.md,
   },
   terminalChip: {
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   terminalChipSelected: {
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(166,20,112,0.25)',
     borderColor: colors.primary,
   },
   terminalChipText: {
-    fontSize: typography.sizes.md,
-    fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.sm,
     color: colors.text.secondary,
   },
   terminalChipTextSelected: {
@@ -663,39 +1068,39 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
   },
   locationItem: {
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderSecondary,
+    backgroundColor: colors.input,
+    marginBottom: spacing.sm,
+  },
+  locationItemSelected: {
+    borderColor: colors.primary,
+  },
+  locationItemDisabled: {
+    opacity: 0.5,
   },
   locationItemText: {
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.sm,
     color: colors.text.primary,
   },
-  customInputContainer: {
-    marginTop: spacing.md,
-    gap: spacing.sm,
-  },
-  customInput: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    fontSize: typography.sizes.md,
-    color: colors.text.primary,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  customSubmitButton: {
-    backgroundColor: colors.primary,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
-    alignItems: 'center',
-  },
-  customSubmitText: {
-    fontSize: typography.sizes.md,
+  locationItemTextSelected: {
     fontWeight: typography.weights.semibold,
-    color: colors.text.primary,
+  },
+  locationItemTextDisabled: {
+    color: colors.text.muted,
+  },
+  locationScopeLabel: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.tertiary,
+  },
+  locationDisabledHint: {
+    fontSize: typography.sizes.xs,
+    color: colors.text.secondary,
   },
 });
