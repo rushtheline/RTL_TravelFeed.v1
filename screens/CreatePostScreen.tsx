@@ -576,8 +576,11 @@ export const CreatePostScreen: React.FC<CreatePostScreenProps> = ({
           <Text style={styles.cardLabel}>Category</Text>
         <ScrollView
           horizontal
-          showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.categoryScroll}
+          showsHorizontalScrollIndicator
+          persistentScrollbar
+          indicatorStyle="white"
+          contentContainerStyle={styles.categoryScroll}
+          style={styles.categoryScrollView}
         >
             {categories.map((cat) => {
               const isSelected = selectedCategory === cat.key;
@@ -774,6 +777,9 @@ const styles = StyleSheet.create({
   helperText: {
     fontSize: typography.sizes.xs,
     color: colors.text.tertiary,
+  },
+  categoryScrollView: {
+    paddingBottom: spacing.xs,
   },
   categoryScroll: {
     gap: spacing.sm,
