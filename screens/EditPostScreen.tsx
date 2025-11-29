@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Video } from 'expo-av';
+import { VideoView, useVideoPlayer } from 'expo-video';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, typography, borderRadius } from '../constants/theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -40,6 +40,11 @@ export const EditPostScreen: React.FC<EditPostScreenProps> = ({
   );
   const [mediaChanged, setMediaChanged] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Initialize video player for preview
+  const player = useVideoPlayer(mediaUri && mediaType === 'video' ? mediaUri : '', player => {
+    player.loop = true;
+  });
 
   const categories: { key: PostCategory; label: string; emoji: string }[] = [
     { key: 'helpful_tip', label: 'Helpful Tip', emoji: '💡' },
@@ -228,12 +233,11 @@ export const EditPostScreen: React.FC<EditPostScreenProps> = ({
         {mediaUri && (
           <View style={styles.mediaPreview}>
             {mediaType === 'video' ? (
-              <Video
-                source={{ uri: mediaUri }}
+              <VideoView
+                player={player}
                 style={styles.mediaImage}
-                useNativeControls
-                resizeMode={'contain' as any}
-                isLooping
+                contentFit="contain"
+                nativeControls
               />
             ) : (
               <Image source={{ uri: mediaUri }} style={styles.mediaImage} />

@@ -1,11 +1,29 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Modal, ScrollView, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ThumbsUp, MessageCircle, EllipsisVertical, Edit2, Trash2, X, MapPinned } from 'lucide-react-native';
-import { Video } from 'expo-av';
-import { colors, spacing, typography, borderRadius } from '../constants/theme';
-import { PostWithDetails } from '../types/database.types';
-import { MentionText } from './MentionText';
+import React, { useState, useRef } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  ScrollView,
+  Dimensions,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  ThumbsUp,
+  MessageCircle,
+  EllipsisVertical,
+  Edit2,
+  Trash2,
+  X,
+  MapPinned,
+} from "lucide-react-native";
+import { VideoView, useVideoPlayer } from "expo-video";
+import { colors, spacing, typography, borderRadius } from "../constants/theme";
+import { PostWithDetails } from "../types/database.types";
+import { MentionText } from "./MentionText";
 
 interface PostCardProps {
   post: PostWithDetails;
@@ -17,42 +35,59 @@ interface PostCardProps {
   isOwner: boolean;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ 
-  post, 
-  onLike, 
-  onComment, 
+export const PostCard: React.FC<PostCardProps> = ({
+  post,
+  onLike,
+  onComment,
   onEdit,
   onDelete,
   isLiked,
-  isOwner 
+  isOwner,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
+  // Initialize video player for video posts
+  const player = useVideoPlayer(
+    post.media_type === "video" && post.media_url ? post.media_url : "",
+    (player) => {
+      player.loop = true;
+      player.play();
+    }
+  );
   const getBadgeEmoji = (badge: string | null) => {
     switch (badge) {
-      case 'road_warrior':
-        return '✈️';
-      case 'frequent_flyer':
-        return '🔥';
-      case 'elite_traveler':
-        return '⭐';
+      case "road_warrior":
+        return "✈️";
+      case "frequent_flyer":
+        return "🔥";
+      case "elite_traveler":
+        return "⭐";
       default:
-        return '';
+        return "";
     }
   };
 
   const getCategoryTag = (category: string) => {
     const tags: Record<string, { label: string; color: string }> = {
-      helpful_tip: { label: 'Helpful Tip', color: colors.categories.helpful_tip },
-      tsa_update: { label: '#TSA Update', color: colors.categories.tsa_update },
-      food: { label: '#Food', color: colors.categories.food },
-      gate_change: { label: '#Gate Change', color: colors.categories.gate_change },
-      wait_time: { label: 'Wait Time', color: colors.categories.wait_time },
-      parking: { label: 'Parking', color: colors.categories.parking },
+      helpful_tip: {
+        label: "Helpful Tip",
+        color: colors.categories.helpful_tip,
+      },
+      tsa_update: { label: "#TSA Update", color: colors.categories.tsa_update },
+      food: { label: "#Food", color: colors.categories.food },
+      gate_change: {
+        label: "#Gate Change",
+        color: colors.categories.gate_change,
+      },
+      wait_time: { label: "Wait Time", color: colors.categories.wait_time },
+      parking: { label: "Parking", color: colors.categories.parking },
     };
-    return tags[category] || { label: category, color: colors.categories.general };
+    return (
+      tags[category] || { label: category, color: colors.categories.general }
+    );
   };
 
   const getTimeAgo = (dateString: string) => {
@@ -60,7 +95,7 @@ export const PostCard: React.FC<PostCardProps> = ({
     const now = new Date();
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (seconds < 60) return 'Just now';
+    if (seconds < 60) return "Just now";
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
     if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
     return `${Math.floor(seconds / 86400)}d ago`;
@@ -73,7 +108,10 @@ export const PostCard: React.FC<PostCardProps> = ({
       <View style={styles.header}>
         <View style={styles.avatar}>
           {post.avatar_url ? (
-            <Image source={{ uri: post.avatar_url }} style={styles.avatarImage} />
+            <Image
+              source={{ uri: post.avatar_url }}
+              style={styles.avatarImage}
+            />
           ) : (
             <View style={styles.avatarPlaceholder}>
               <Text style={styles.avatarText}>
@@ -85,13 +123,18 @@ export const PostCard: React.FC<PostCardProps> = ({
 
         <View style={styles.userInfo}>
           <View style={styles.nameRow}>
-            <Text style={styles.username}>{post.display_name || post.username}</Text>
+            <Text style={styles.username}>
+              {post.display_name || post.username}
+            </Text>
             {post.user_badge && (
               <Text style={styles.badge}>{getBadgeEmoji(post.user_badge)}</Text>
             )}
             <Text style={styles.userRole}>
-              {post.user_role === 'frequent_flyer' ? 'Frequent Flyer' : 
-               post.user_role === 'staff' ? 'Staff' : ''}
+              {post.user_role === "frequent_flyer"
+                ? "Frequent Flyer"
+                : post.user_role === "staff"
+                ? "Staff"
+                : ""}
             </Text>
           </View>
           <Text style={styles.timestamp}>{getTimeAgo(post.created_at)}</Text>
@@ -107,44 +150,47 @@ export const PostCard: React.FC<PostCardProps> = ({
             <Text style={styles.categoryText}>{categoryTag.label}</Text>
           </LinearGradient>
         </View>
-          {isOwner && (onEdit || onDelete) && (
-            <TouchableOpacity 
-              style={styles.menuButton}
-              onPress={() => setShowMenu(true)}
-            >
-              <EllipsisVertical size={20} color={colors.text.secondary} />
-            </TouchableOpacity>
-          )}
+        {isOwner && (onEdit || onDelete) && (
+          <TouchableOpacity
+            style={styles.menuButton}
+            onPress={() => setShowMenu(true)}
+          >
+            <EllipsisVertical size={20} color={colors.text.secondary} />
+          </TouchableOpacity>
+        )}
       </View>
 
-      <MentionText 
-        text={post.content} 
+      <MentionText
+        text={post.content}
         style={styles.content}
         onMentionPress={(username) => {
-          Alert.alert('User Profile', `View profile for @${username} (coming soon)`);
+          Alert.alert(
+            "User Profile",
+            `View profile for @${username} (coming soon)`
+          );
         }}
       />
 
-      {post.media_url && (
-        post.media_type === 'video' ? (
-          <Video
-            source={{ uri: post.media_url }}
+      {post.media_url &&
+        (post.media_type === "video" ? (
+          <VideoView
+            player={player}
             style={styles.media}
-            useNativeControls={false}
-            resizeMode={'cover' as any}
-            isLooping
-            shouldPlay={false}
+            nativeControls={true}
+            contentFit="cover"
           />
         ) : (
-          <TouchableOpacity onPress={() => setShowImageModal(true)} activeOpacity={0.9}>
+          <TouchableOpacity
+            onPress={() => setShowImageModal(true)}
+            activeOpacity={0.9}
+          >
             <Image
               source={{ uri: post.media_url }}
               style={styles.media}
               resizeMode="cover"
             />
           </TouchableOpacity>
-        )
-      )}
+        ))}
 
       <View style={styles.footer}>
         <View style={styles.stats}>
@@ -166,7 +212,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             <MessageCircle color={colors.text.secondary} size={18} />
             <Text style={styles.actionText}>{post.comment_count}</Text>
           </TouchableOpacity>
-{/* 
+          {/* 
           <View style={styles.xpBadge}>
             <Text style={styles.xpIcon}>💡</Text>
             <Text style={styles.xpText}>+{post.xp_reward} XP</Text>
@@ -181,7 +227,7 @@ export const PostCard: React.FC<PostCardProps> = ({
         animationType="fade"
         onRequestClose={() => setShowMenu(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setShowMenu(false)}
@@ -195,7 +241,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             </View>
 
             {onEdit && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
                   setShowMenu(false);
@@ -208,7 +254,7 @@ export const PostCard: React.FC<PostCardProps> = ({
             )}
 
             {onDelete && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.menuItem}
                 onPress={() => {
                   setShowMenu(false);
@@ -216,7 +262,9 @@ export const PostCard: React.FC<PostCardProps> = ({
                 }}
               >
                 <Trash2 size={20} color={colors.error} />
-                <Text style={[styles.menuItemText, { color: colors.error }]}>Delete Post</Text>
+                <Text style={[styles.menuItemText, { color: colors.error }]}>
+                  Delete Post
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -231,13 +279,13 @@ export const PostCard: React.FC<PostCardProps> = ({
         onRequestClose={() => setShowImageModal(false)}
       >
         <View style={styles.imageModalOverlay}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.imageModalClose}
             onPress={() => setShowImageModal(false)}
           >
             <X size={32} color="#FFFFFF" />
           </TouchableOpacity>
-          
+
           <ScrollView
             ref={scrollViewRef}
             style={styles.imageModalContent}
@@ -272,16 +320,16 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: '#000000',
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.35,
     shadowRadius: 20,
     elevation: 10,
-    width: '100%',
+    width: "100%",
     maxWidth: 576,
   },
   header: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: spacing.md,
   },
   avatar: {
@@ -291,17 +339,17 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   avatarImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: borderRadius.full,
   },
   avatarPlaceholder: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
     borderRadius: borderRadius.full,
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   avatarText: {
     fontSize: typography.sizes.lg,
@@ -312,8 +360,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
     marginBottom: 2,
   },
@@ -334,8 +382,8 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
   },
   headerRight: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
+    flexDirection: "column",
+    alignItems: "flex-end",
     gap: spacing.xs,
   },
   categoryTag: {
@@ -343,17 +391,17 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.base,
     minHeight: 24,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   categoryText: {
     fontSize: typography.sizes.xxs,
     fontWeight: typography.weights.semibold,
     color: colors.text.primary,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   ownerActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.xs,
   },
   actionIconButton: {
@@ -361,8 +409,8 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: borderRadius.sm,
     backgroundColor: colors.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -376,20 +424,20 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   media: {
-    width: '100%',
+    width: "100%",
     aspectRatio: 1,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.lg,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   stats: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
   },
   statIcon: {
@@ -400,13 +448,13 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.lg,
   },
   actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
     minHeight: 44,
   },
@@ -419,8 +467,8 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
   },
   xpBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surface,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
@@ -440,23 +488,23 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   menuModal: {
     backgroundColor: colors.surface,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
-    width: '80%',
+    width: "80%",
     maxWidth: 400,
     borderWidth: 1,
     borderColor: colors.borderSecondary,
   },
   menuHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: spacing.md,
     paddingBottom: spacing.sm,
     borderBottomWidth: 1,
@@ -468,8 +516,8 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.md,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.sm,
@@ -484,12 +532,12 @@ const styles = StyleSheet.create({
   },
   imageModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.95)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   imageModalClose: {
-    position: 'absolute',
+    position: "absolute",
     top: 50,
     right: 20,
     zIndex: 10,
@@ -497,15 +545,15 @@ const styles = StyleSheet.create({
   },
   imageModalContent: {
     flex: 1,
-    width: '100%',
+    width: "100%",
   },
   fullImage: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   imageScrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

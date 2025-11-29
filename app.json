@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.rushtheline.app",
+      "bundleIdentifier": "com.rushthelinev3.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -24,7 +24,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1A1A2E"
       },
-      "package": "com.rushtheline.app",
+      "package": "com.rushthelinev3.app",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -51,7 +51,8 @@
         {
           "locationAlwaysAndWhenInUsePermission": "Allow RushTheLine to use your location to show relevant airport content."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "extra": {
       "eas": {
