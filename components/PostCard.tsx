@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {
   Trash2,
   X,
   MapPinned,
+  Play,
 } from "lucide-react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { colors, spacing, typography, borderRadius } from "../constants/theme";
@@ -46,6 +47,7 @@ export const PostCard: React.FC<PostCardProps> = ({
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -54,9 +56,22 @@ export const PostCard: React.FC<PostCardProps> = ({
     post.media_type === "video" && post.media_url ? post.media_url : "",
     (player) => {
       player.loop = true;
-      player.play();
+      // Don't autoplay - let user control via native controls
     }
   );
+
+  // Listen to video player status changes
+  useEffect(() => {
+    if (!player) return;
+
+    const subscription = player.addListener("playingChange", (newStatus) => {
+      setIsVideoPlaying(newStatus.isPlaying);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [player]);
   const getBadgeEmoji = (badge: string | null) => {
     switch (badge) {
       case "road_warrior":
@@ -173,12 +188,21 @@ export const PostCard: React.FC<PostCardProps> = ({
 
       {post.media_url &&
         (post.media_type === "video" ? (
-          <VideoView
-            player={player}
-            style={styles.media}
-            nativeControls={true}
-            contentFit="cover"
-          />
+          <View style={styles.videoContainer}>
+            <VideoView
+              player={player}
+              style={styles.media}
+              nativeControls={true}
+              contentFit="cover"
+            />
+            {!isVideoPlaying && (
+              <View style={styles.playIconOverlay}>
+                <View style={styles.playIconCircle}>
+                  <Play size={32} color="#FFFFFF" fill="#FFFFFF" />
+                </View>
+              </View>
+            )}
+          </View>
         ) : (
           <TouchableOpacity
             onPress={() => setShowImageModal(true)}
@@ -423,12 +447,40 @@ const styles = StyleSheet.create({
     color: colors.text.primary,
     marginBottom: spacing.lg,
   },
+  videoContainer: {
+    width: "100%",
+    aspectRatio: 1,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.lg,
+    overflow: "hidden",
+    position: "relative",
+  },
   media: {
     width: "100%",
     aspectRatio: 1,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.lg,
     overflow: "hidden",
+  },
+  playIconOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    pointerEvents: "none",
+  },
+  playIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 3,
+    borderColor: "rgba(255, 255, 255, 0.9)",
   },
   footer: {
     flexDirection: "row",

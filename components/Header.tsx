@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { colors, spacing, typography, borderRadius } from '../constants/theme';
-import { Profile } from '../types/database.types';
-import { AirportSelector } from './AirportSelector';
-import { Brain, TicketsPlane } from 'lucide-react-native';
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { colors, spacing, typography, borderRadius } from "../constants/theme";
+import { Profile } from "../types/database.types";
+import { AirportSelector } from "./AirportSelector";
+import { Brain, TicketsPlane } from "lucide-react-native";
 
 interface HeaderProps {
   profile: Profile;
@@ -27,25 +27,25 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const getBadgeEmoji = (badge: string | null) => {
     switch (badge) {
-      case 'road_warrior':
-        return '✈️';
-      case 'frequent_flyer':
-        return '🔥';
-      case 'elite_traveler':
-        return '⭐';
+      case "road_warrior":
+        return "✈️";
+      case "frequent_flyer":
+        return "🔥";
+      case "elite_traveler":
+        return "⭐";
       default:
-        return '';
+        return "";
     }
   };
 
   const getBadgeLabel = (badge: string | null) => {
     switch (badge) {
-      case 'road_warrior':
-        return 'Road Warrior';
-      case 'frequent_flyer':
-        return 'Frequent Flyer';
-      case 'elite_traveler':
-        return 'Elite Traveler';
+      case "road_warrior":
+        return "Road Warrior";
+      case "frequent_flyer":
+        return "Frequent Flyer";
+      case "elite_traveler":
+        return "Elite Traveler";
       default:
         return null;
     }
@@ -63,7 +63,9 @@ export const Header: React.FC<HeaderProps> = ({
             </Text>
             {badgeLabel && (
               <View style={styles.badgeContainer}>
-                <Text style={styles.badgeEmoji}>{getBadgeEmoji(profile.badge)}</Text>
+                <Text style={styles.badgeEmoji}>
+                  {getBadgeEmoji(profile.badge)}
+                </Text>
                 <Text style={styles.badgeText}>{badgeLabel}</Text>
               </View>
             )}
@@ -83,6 +85,9 @@ export const Header: React.FC<HeaderProps> = ({
           <AirportSelector
             selectedAirportId={currentAirportId}
             onSelectAirport={onChangeAirport}
+            disabled={!profile.flight_number}
+            departureAirport={profile.departure_airport}
+            arrivalAirport={profile.arrival_airport}
           />
         </View>
 
@@ -108,17 +113,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
     paddingBottom: spacing.lg,
-    width: '100%',
+    width: "100%",
     maxWidth: 672,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   welcomeSection: {
     marginBottom: spacing.md,
   },
   welcomeRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
   welcomeContent: {
     flex: 1,
@@ -138,12 +143,12 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSecondary,
     backgroundColor: colors.input,
     minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   badgeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.xs,
   },
   badgeEmoji: {
@@ -161,7 +166,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   buttonRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
   },
   airportSelectorContainer: {
@@ -169,13 +174,13 @@ const styles = StyleSheet.create({
   },
   aiButton: {
     borderRadius: borderRadius.base,
-    overflow: 'hidden',
+    overflow: "hidden",
     height: 50,
   },
   aiButtonGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: spacing.xs,
     paddingHorizontal: spacing.lg,
     height: 50,

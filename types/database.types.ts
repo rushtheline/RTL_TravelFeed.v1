@@ -1,6 +1,13 @@
-export type UserRole = 'regular' | 'frequent_flyer' | 'staff';
-export type UserBadge = 'road_warrior' | 'frequent_flyer' | 'elite_traveler';
-export type PostCategory = 'helpful_tip' | 'wait_time' | 'food' | 'gate_change' | 'tsa_update' | 'parking' | 'general';
+export type UserRole = "regular" | "frequent_flyer" | "staff";
+export type UserBadge = "road_warrior" | "frequent_flyer" | "elite_traveler";
+export type PostCategory =
+  | "helpful_tip"
+  | "wait_time"
+  | "food"
+  | "gate_change"
+  | "tsa_update"
+  | "parking"
+  | "general";
 
 export interface Airport {
   id: string;
@@ -39,6 +46,24 @@ export interface Profile {
   current_airport_id: string | null;
   current_terminal_id: string | null;
   bio: string | null;
+  flight_number: string | null;
+  flight_iata: string | null;
+  departure_airport: string | null;
+  arrival_airport: string | null;
+  departure_time: string | null;
+  arrival_time: string | null;
+  airline_name: string | null;
+  flight_status: string | null;
+  dep_gate: string | null;
+  arr_gate: string | null;
+  dep_terminal: string | null;
+  arr_terminal: string | null;
+  flight_duration: number | null;
+  dep_delayed: number | null;
+  arr_delayed: number | null;
+  codeshare_airline: string | null;
+  codeshare_flight: string | null;
+  has_seen_flight_modal: boolean;
   created_at: string;
   updated_at: string;
 }

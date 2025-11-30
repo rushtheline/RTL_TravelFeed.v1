@@ -92,16 +92,38 @@ export const FeedScreen: React.FC = () => {
 
   const initializeLocation = async () => {
     try {
-      // Get airport ID
-      const { data: airport } = await supabase
-        .from("airports")
-        .select("id")
-        .eq("code", currentAirport)
-        .single();
+      let airportId = profile?.current_airport_id;
+      let airportCode = currentAirport;
 
-      if (airport) {
-        setCurrentAirportId(airport.id);
+      // If user has a saved airport ID, use it
+      if (profile?.current_airport_id) {
+        const { data: airport } = await supabase
+          .from("airports")
+          .select("id, code, name")
+          .eq("id", profile.current_airport_id)
+          .single();
 
+        if (airport) {
+          airportId = airport.id;
+          airportCode = airport.code;
+          setCurrentAirport(airportCode);
+          setCurrentAirportId(airport.id);
+        }
+      } else {
+        // Fallback to default airport
+        const { data: airport } = await supabase
+          .from("airports")
+          .select("id, code")
+          .eq("code", currentAirport)
+          .single();
+
+        if (airport) {
+          airportId = airport.id;
+          setCurrentAirportId(airport.id);
+        }
+      }
+
+      if (airportId) {
         // If user has a saved terminal, use it
         if (profile?.current_terminal_id) {
           setCurrentTerminalId(profile.current_terminal_id);
@@ -121,7 +143,7 @@ export const FeedScreen: React.FC = () => {
           const { data: terminal } = await supabase
             .from("terminals")
             .select("id, name")
-            .eq("airport_id", airport.id)
+            .eq("airport_id", airportId)
             .eq("code", "B")
             .single();
 
@@ -560,19 +582,142 @@ export const FeedScreen: React.FC = () => {
     Alert.alert("AI Summary", "AI-powered terminal summary coming soon!");
   };
 
-  const handleFlightInfoSubmit = async (flightNumber: string) => {
+  const handleFlightInfoSubmit = async (
+    flightNumber: string,
+    flightData: any
+  ) => {
     try {
-      // Update profile to mark modal as seen
-      await supabase
-        .from("profiles")
-        .update({ 
-          has_seen_flight_modal: true,
-          flight_number: flightNumber 
-        })
-        .eq("id", profile?.id);
+      // Handle clearing flight data
+      if (flightNumber === "" && flightData === null) {
+        await supabase
+          .from("profiles")
+          .update({
+            flight_number: null,
+            flight_iata: null,
+            departure_airport: null,
+            arrival_airport: null,
+            departure_time: null,
+            arrival_time: null,
+            airline_name: null,
+            flight_status: null,
+            dep_gate: null,
+            arr_gate: null,
+            dep_terminal: null,
+            arr_terminal: null,
+            flight_duration: null,
+            dep_delayed: null,
+            arr_delayed: null,
+            codeshare_airline: null,
+            codeshare_flight: null,
+          })
+          .eq("id", profile?.id);
 
-      setShowFlightInfoModal(false);
-      Alert.alert("Success", `Flight ${flightNumber} saved! You'll receive terminal-specific updates.`);
+        await refreshProfile();
+        // Keep modal open so user can enter new flight number
+        // Modal will now show the input form again since flight_number is null
+        return;
+      }
+
+      if (flightData) {
+        // Check and create airports if they don't exist
+        const airportsToCheck = [
+          {
+            code: flightData.dep_iata,
+            name: flightData.dep_name || `${flightData.dep_iata} Airport`,
+            city: flightData.dep_city || "",
+            country: flightData.dep_country || "",
+          },
+          {
+            code: flightData.arr_iata,
+            name: flightData.arr_name || `${flightData.arr_iata} Airport`,
+            city: flightData.arr_city || "",
+            country: flightData.arr_country || "",
+          },
+        ];
+
+        for (const airport of airportsToCheck) {
+          // Check if airport exists
+          const { data: existingAirport } = await supabase
+            .from("airports")
+            .select("id")
+            .eq("code", airport.code)
+            .single();
+
+          // Create airport if it doesn't exist
+          if (!existingAirport) {
+            console.log(`Creating airport: ${airport.code} - ${airport.name}`);
+            const { error: insertError } = await supabase
+              .from("airports")
+              .insert({
+                code: airport.code,
+                name: airport.name,
+                city: airport.city,
+                country: airport.country,
+              });
+
+            if (insertError) {
+              console.error(
+                `Error creating airport ${airport.code}:`,
+                insertError
+              );
+            } else {
+              console.log(`Airport ${airport.code} created successfully`);
+            }
+          } else {
+            console.log(`Airport ${airport.code} already exists`);
+          }
+        }
+
+        // Get the departure airport ID to set as current airport
+        const { data: depAirport } = await supabase
+          .from("airports")
+          .select("id")
+          .eq("code", flightData.dep_iata)
+          .single();
+
+        // Update profile with flight data from API
+        // Also set current_airport_id to departure airport
+        await supabase
+          .from("profiles")
+          .update({
+            has_seen_flight_modal: true,
+            flight_number: flightNumber,
+            flight_iata: flightData.flight_iata,
+            departure_airport: flightData.dep_iata,
+            arrival_airport: flightData.arr_iata,
+            departure_time: flightData.dep_time,
+            arrival_time: flightData.arr_time,
+            airline_name: flightData.airline_name,
+            flight_status: flightData.status,
+            dep_gate: flightData.dep_gate,
+            arr_gate: flightData.arr_gate,
+            dep_terminal: flightData.dep_terminal,
+            arr_terminal: flightData.arr_terminal,
+            flight_duration: flightData.duration,
+            dep_delayed: flightData.dep_delayed,
+            arr_delayed: flightData.arr_delayed,
+            codeshare_airline: flightData.cs_airline_iata,
+            codeshare_flight: flightData.cs_flight_iata,
+            current_airport_id: depAirport?.id || null,
+          })
+          .eq("id", profile?.id);
+      } else {
+        // No flight data (confirmation code or skipped)
+        await supabase
+          .from("profiles")
+          .update({
+            has_seen_flight_modal: true,
+            flight_number: flightNumber,
+          })
+          .eq("id", profile?.id);
+      }
+
+      // Refresh profile to update the airport selector
+      await refreshProfile();
+
+      // Keep modal open to show the flight information
+      // Modal will stay open and display the saved flight data
+      // User can close it manually using the X button
     } catch (error) {
       console.error("Error saving flight info:", error);
       Alert.alert("Error", "Failed to save flight information");
@@ -701,6 +846,7 @@ export const FeedScreen: React.FC = () => {
         visible={showFlightInfoModal}
         onClose={handleFlightInfoClose}
         onSubmit={handleFlightInfoSubmit}
+        profile={profile}
       />
 
       <FlatList
@@ -834,9 +980,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   feedItem: {
-    width: '100%',
+    width: "100%",
     maxWidth: 576,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   terminalInfo: {
     flexDirection: "row",
@@ -863,9 +1009,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     marginBottom: spacing.lg,
     gap: spacing.sm,
-    width: '100%',
+    width: "100%",
     maxWidth: 576,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   feedNoticeIcon: {
     fontSize: 12,

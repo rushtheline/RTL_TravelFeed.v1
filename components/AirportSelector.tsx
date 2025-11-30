@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,10 +7,10 @@ import {
   Modal,
   FlatList,
   ActivityIndicator,
-} from 'react-native';
-import { ChevronDown, Plane } from 'lucide-react-native';
-import { colors, spacing, typography, borderRadius } from '../constants/theme';
-import { supabase } from '../lib/supabase';
+} from "react-native";
+import { ChevronDown, Plane } from "lucide-react-native";
+import { colors, spacing, typography, borderRadius } from "../constants/theme";
+import { supabase } from "../lib/supabase";
 
 interface Airport {
   id: string;
@@ -23,11 +23,17 @@ interface Airport {
 interface AirportSelectorProps {
   selectedAirportId?: string;
   onSelectAirport: (airport: Airport) => void;
+  disabled?: boolean;
+  departureAirport?: string | null;
+  arrivalAirport?: string | null;
 }
 
 export const AirportSelector: React.FC<AirportSelectorProps> = ({
   selectedAirportId,
   onSelectAirport,
+  disabled = false,
+  departureAirport = null,
+  arrivalAirport = null,
 }) => {
   const [airports, setAirports] = useState<Airport[]>([]);
   const [selectedAirport, setSelectedAirport] = useState<Airport | null>(null);
@@ -36,7 +42,7 @@ export const AirportSelector: React.FC<AirportSelectorProps> = ({
 
   useEffect(() => {
     fetchAirports();
-  }, []);
+  }, [departureAirport, arrivalAirport]);
 
   useEffect(() => {
     if (selectedAirportId && airports.length > 0) {
@@ -50,15 +56,30 @@ export const AirportSelector: React.FC<AirportSelectorProps> = ({
   const fetchAirports = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('airports')
-        .select('*')
-        .order('code');
 
-      if (error) throw error;
-      setAirports(data || []);
+      // If user has flight data, only show departure and arrival airports
+      if (departureAirport || arrivalAirport) {
+        const airportCodes = [departureAirport, arrivalAirport].filter(Boolean);
+        const { data, error } = await supabase
+          .from("airports")
+          .select("*")
+          .in("code", airportCodes)
+          .order("code");
+
+        if (error) throw error;
+        setAirports(data || []);
+      } else {
+        // No flight data - show all airports
+        const { data, error } = await supabase
+          .from("airports")
+          .select("*")
+          .order("code");
+
+        if (error) throw error;
+        setAirports(data || []);
+      }
     } catch (error) {
-      console.error('Error fetching airports:', error);
+      console.error("Error fetching airports:", error);
     } finally {
       setLoading(false);
     }
@@ -108,20 +129,19 @@ export const AirportSelector: React.FC<AirportSelectorProps> = ({
   return (
     <>
       <TouchableOpacity
-        style={styles.selector}
-        onPress={() => setModalVisible(true)}
+        style={[styles.selector, disabled && styles.selectorDisabled]}
+        onPress={() => !disabled && setModalVisible(true)}
+        disabled={disabled}
       >
         <View style={styles.selectorContent}>
           <View style={styles.selectorLeft}>
             <Plane size={20} color={colors.primary} />
             <View style={styles.selectorText}>
               <Text style={styles.airportName}>
-                {selectedAirport?.code || 'Select Airport'}
+                {selectedAirport?.code || "Select Airport"}
               </Text>
               {selectedAirport && (
-                <Text style={styles.cityName}>
-                  {selectedAirport.city}
-                </Text>
+                <Text style={styles.cityName}>{selectedAirport.city}</Text>
               )}
             </View>
           </View>
@@ -163,7 +183,7 @@ export const AirportSelector: React.FC<AirportSelectorProps> = ({
 const styles = StyleSheet.create({
   loadingContainer: {
     padding: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   selector: {
     backgroundColor: colors.input,
@@ -174,14 +194,18 @@ const styles = StyleSheet.create({
     borderColor: colors.borderSecondary,
     minHeight: 48,
   },
+  selectorDisabled: {
+    opacity: 0.5,
+    backgroundColor: colors.surface,
+  },
   selectorContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   selectorLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.sm,
     flex: 1,
   },
@@ -200,21 +224,21 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   modalContent: {
     backgroundColor: colors.card,
     borderTopLeftRadius: borderRadius.xl,
     borderTopRightRadius: borderRadius.xl,
-    maxHeight: '80%',
+    maxHeight: "80%",
     borderWidth: 1,
     borderColor: colors.borderSecondary,
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSecondary,
@@ -227,8 +251,8 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 32,
     height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   closeButtonText: {
     fontSize: typography.sizes.xl,
@@ -238,9 +262,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   airportItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: colors.input,
     padding: spacing.md,
     borderRadius: borderRadius.base,
@@ -253,8 +277,8 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.primary}20`,
   },
   airportItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: spacing.md,
     flex: 1,
   },
@@ -263,8 +287,8 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     backgroundColor: `${colors.primary}30`,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: colors.primary,
   },
@@ -291,8 +315,8 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   checkmarkText: {
     color: colors.text.primary,
