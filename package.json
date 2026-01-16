@@ -12,8 +12,12 @@
     "android:dev:build": "eas build --platform android --profile development",
     "ios:preview:build": "eas build --platform ios --profile preview",
     "ios:preview:update": "eas update --branch preview --platform ios",
+    "ios:production:build": "eas build --platform ios --profile production",
+    "ios:production:update": "eas update --branch production --platform ios",
     "android:preview:build": "eas build --platform android --profile preview",
     "android:preview:update": "eas update --branch preview --platform android",
+    "android:production:build": "eas build --platform android --profile production",
+    "android:production:update": "eas update --branch production --platform android",
     "prebuild": "npm install"
   },
   "dependencies": {

@@ -589,6 +589,13 @@ export const FeedScreen: React.FC = () => {
     try {
       // Handle clearing flight data
       if (flightNumber === "" && flightData === null) {
+        // Get ATL airport ID to reset to default
+        const { data: atlAirport } = await supabase
+          .from("airports")
+          .select("id")
+          .eq("code", "ATL")
+          .single();
+
         await supabase
           .from("profiles")
           .update({
@@ -609,10 +616,31 @@ export const FeedScreen: React.FC = () => {
             arr_delayed: null,
             codeshare_airline: null,
             codeshare_flight: null,
+            current_airport_id: atlAirport?.id || null,
           })
           .eq("id", profile?.id);
 
         await refreshProfile();
+
+        // Reset local state to ATL
+        setCurrentAirport("ATL");
+        if (atlAirport) {
+          setCurrentAirportId(atlAirport.id);
+
+          // Get Terminal B for ATL
+          const { data: terminal } = await supabase
+            .from("terminals")
+            .select("id, name")
+            .eq("airport_id", atlAirport.id)
+            .eq("code", "B")
+            .single();
+
+          if (terminal) {
+            setCurrentTerminal(terminal.name);
+            setCurrentTerminalId(terminal.id);
+          }
+        }
+
         // Keep modal open so user can enter new flight number
         // Modal will now show the input form again since flight_number is null
         return;
